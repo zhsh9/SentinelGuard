@@ -1,7 +1,7 @@
 <p align="center">
   <img src="./static/img/logo.svg" alt="logo" style="width:200px;">
 </p>
-<p align="center"><i>A Real-time HTTP Intrusion Detection System.</i></p>
+<p align="center"><i>An Integrated Real-time HTTP Intrusion Detection System.</i></p>
 <div align="center">
   <a href="https://github.com/zhsh9/SentinelGuard/stargazers"><img src="https://img.shields.io/github/stars/zhsh9/SentinelGuard" alt="Stars Badge"/></a>
 <a href="https://github.com/zhsh9/SentinelGuard/network/members"><img src="https://img.shields.io/github/forks/zhsh9/SentinelGuard" alt="Forks Badge"/></a>
