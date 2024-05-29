@@ -1,0 +1,174 @@
+# App config
+host: "127.0.0.1"
+port: 5000
+
+# Data storing strategy: cache ok, db TODO
+cache:
+  activate: true
+  path: /path/to/cache.file
+database:
+  activate: false
+  host:
+  port:
+  username:
+  password:
+
+# Log file config
+server: apache # Option: apache, nginx, iis
+server_config: # e.g. Apache's configuration file path: /etc/apache2/httpd.conf
+  active: false
+  path: /path/to/server.config
+
+logs:
+  # Fill in the log path info
+  file:
+    active: true
+    json: false
+    yaml: false
+    path: /var/log/apache2/access.log
+
+# Rules to identify intrusion network
+rules:
+  ai_methods:
+    - "LLM Classifier"
+    - "ML&DL Classifier"
+  intrusions:
+    - "Common Vulnerabilities and Exposures"
+    - "SQL Injection"
+    - "Directory Traversal"
+    - "File Inclusion"
+    - "File Upload"
+    - "Command Injection"
+    - "Cross-Site Scripting"
+    - "Enumeration of Files and Directories"
+    - "Enumeration of Virtual Hosts"
+    - "Enumeration of HTTP Parameters"
+    - "Brute Force Attacks"
+
+  whitelists: # IP addresses or domains that are trusted and should bypass detection
+#    ips:
+#      - "192.168.1.100"
+#      - "10.0.0.1"
+#    domains:
+#      - "trusted-domain.com"
+#      - "another-trusted.com"
+#    users:
+#      - "admin"
+#      - "trusted_user"
+
+  blacklists: # IP addresses or domains that are known to be malicious and should be blocked
+#    ips:
+#      - "203.0.113.0"
+#      - "198.51.100.0"
+#    domains:
+#      - "malicious-domain.com"
+#      - "phishing-site.com"
+#    users:
+#      - "malicious_user"
+#      - "suspicious_user"
+
+  customs: # Custom rules for specific detection scenarios
+#    patterns:
+#      - ".*\\bpassword\\b.*"  # Regex pattern to detect occurrences of the word 'password'
+#      - ".*\\badmin\\b.*"    # Regex pattern to detect occurrences of the word 'admin'
+#    scripts:
+#      - "custom_script_1.py"
+#      - "custom_script_2.py"
+#    thresholds:
+#      - type: "login_attempts"
+#        limit: 10
+#        timeframe: "1m"  # 10 attempts per minute
+#      - type: "file_uploads"
+#        limit: 5
+#        timeframe: "10m"  # 5 uploads per 10 minutes
+
+# Configuration for parsing and formatting HTTP server logs
+apache:
+  log_format: "combined"
+  pattern: '%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"'
+  fields:
+    - name: remote_host
+      type: string
+    - name: log_name
+      type: string
+    - name: remote_user
+      type: string
+    - name: time
+      type: string
+    - name: request
+      type: string
+    - name: status
+      type: integer
+    - name: bytes
+      type: integer
+    - name: referer
+      type: string
+    - name: user_agent
+      type: string
+
+nginx:
+  log_format: "combined"
+  pattern: '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"'
+  fields:
+    - name: remote_addr
+      type: string
+    - name: remote_user
+      type: string
+    - name: time_local
+      type: string
+    - name: request
+      type: string
+    - name: status
+      type: integer
+    - name: body_bytes_sent
+      type: integer
+    - name: http_referer
+      type: string
+    - name: http_user_agent
+      type: string
+
+iis:
+  log_format: "W3C"
+  pattern: '#Fields: date time s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) sc-status sc-substatus sc-win32-status time-taken'
+  fields:
+    - name: date
+      type: string
+    - name: time
+      type: string
+    - name: server_ip
+      type: string
+    - name: method
+      type: string
+    - name: uri_stem
+      type: string
+    - name: uri_query
+      type: string
+    - name: server_port
+      type: integer
+    - name: username
+      type: string
+    - name: client_ip
+      type: string
+    - name: user_agent
+      type: string
+    - name: status
+      type: integer
+    - name: substatus
+      type: integer
+    - name: win32_status
+      type: integer
+    - name: time_taken
+      type: integer
+# Add other server log formats and patterns as needed
+
+# LLM(OpenAI) API Token config
+openai:
+  active: true
+  service: azure # Option: openai(official), azure(https://learn.microsoft.com/en-us/azure/ai-services/openai/reference)
+  config:
+    model: gpt-4
+    api_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    organization:
+    project:
+    base_url: https://{your-resource-name}.openai.azure.com/openai/deployments/{deployment-id}/chat/completions
+    api_version: 2023-07-01-preview
