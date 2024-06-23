@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./frontend/src/assets/logo-font2.png" alt="logo" style="width:450px; height: auto">
+  <img src="./frontend/src/assets/logo-font2.png" alt="logo" style="width:300px; height: auto">
 </p>
 <p align="center"><i>An Integrated Real-time HTTP Intrusion Detection System.</i></p>
 <div align="center">
