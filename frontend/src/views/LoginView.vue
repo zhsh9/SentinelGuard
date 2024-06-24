@@ -106,9 +106,6 @@ export default {
 
     // Login
     const handleSubmit = async () => {
-      // 给加载动画腾出时间
-      setTimeout(() => {}, 3000);
-
       errorMessage.value = "";
       const path = "http://localhost:8001/api/login";
       const post_body = {
