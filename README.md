@@ -14,7 +14,7 @@
 ## Installation
 
 - Flask@3, Flask-CORS, Flask-SQLAlchemy
-- Vue@3, Bootstrap@5.3.3
+- Vue@3, Bootstrap@5.3.3, Popper@2.11.8
 
 ```bash
 pip install -r requirement.txt

@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div
-        class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary"
+        class="sidebar border border-right col-md-4 col-lg-3 p-0 bg-body-tertiary"
       >
         <div id="info" class="my-2">
           <a
@@ -144,9 +144,12 @@
             </li>
           </ul>
         </div>
+        <br />
+        <br />
+        <br />
       </div>
 
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <main class="ms-sm-auto col-md-8 col-lg-9 px-md-4">
         <div
           class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
         >
@@ -520,7 +523,7 @@ export default {
   position: -webkit-sticky;
   position: sticky;
   top: 48px;
-  height: calc(100vh - 48px);
+  // height: calc(100vh - 48px);
   overflow-y: auto;
 }
 
@@ -545,13 +548,17 @@ export default {
   font-size: 0.75rem;
 }
 
-.sidebar.border.border-right.col-md-3.col-lg-2.p-0.bg-body-tertiary {
-  width: 20.7%;
-}
+// // width + height vairables
+// $sidebar_width: 20.7%;
+// $main_width: 1-$sidebar_width;
 
-#app > div:nth-child(3) > div.container-fluid > div > main {
-  width: 79.3%;
-}
+// .sidebar.border.border-right.col-md-3.col-lg-2.p-0.bg-body-tertiary {
+//   width: $sidebar_width;
+// }
+
+// #app > div:nth-child(3) > div.container-fluid > div > main {
+//   width: $main_width;
+// }
 
 #info {
   display: flex;
@@ -617,4 +624,14 @@ $margin-top: 5px;
   padding-top: 20px;
   margin: 0;
 }
+
+// sidebar height
+#app > div:nth-child(3) > div > div > div {
+  height: 89%;
+}
+
+// navbar format
+// #app > div:nth-child(3) > nav > div > div.navbar-brand-container {
+
+// }
 </style>

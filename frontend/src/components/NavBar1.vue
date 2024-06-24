@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-xl navbar-dark fixed-top bg-dark">
     <div class="container-fluid">
-      <div class="navbar-brand-container">
+      <div class="navbar-brand-container col-md-4 col-lg-3">
         <div>
           <a class="navbar-brand" href="/"
             ><img class="navbar-brand" src="../assets/logo.svg" alt="logo" />
@@ -20,7 +20,10 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarCollapse">
+      <div
+        class="collapse navbar-collapse col-md-8 col-lg-9"
+        id="navbarCollapse"
+      >
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
           <DataBase />
           <UploadPcap />
@@ -71,12 +74,6 @@ $brand_column1_width: 20.7%;
   display: flex;
   flex-direction: column;
   align-items: center; // 垂直居中对齐
-  width: $brand_column1_width !important;
-}
-
-// 将文本和图标一起居中对齐
-#navbarCollapse {
-  width: 1-$brand_column1_width !important;
 }
 
 .navbar {

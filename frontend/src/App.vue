@@ -49,10 +49,6 @@ body {
   width: 100%;
 }
 
-.navbar {
-  z-index: 10 !important;
-}
-
 .content-wrapper {
   flex: 1;
   overflow-y: auto;
