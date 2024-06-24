@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./static/img/logo.svg" alt="logo" style="width:200px;">
+  <img src="./frontend/src/assets/logo-font2.png" alt="logo" style="width:300px; height: auto">
 </p>
 <p align="center"><i>An Integrated Real-time HTTP Intrusion Detection System.</i></p>
 <div align="center">
@@ -13,16 +13,21 @@
 
 ## Installation
 
+- Flask@3, Flask-CORS, Flask-SQLAlchemy
+- Vue@3, Bootstrap@5.3.3, Popper@2.11.8
+
 ```bash
 pip install -r requirement.txt
 ```
 
 ## Configuration
 
-The `example.config.yaml` is the configuration reference, while the customized `config.yaml` is the one used in this project.
+- Backend: `config.py`
+- Frontend: `vue.config.js`
 
 ## Usage
 
 ```bash
-python app.py
+python backend/app.py
+cd frontend && npm run serve
 ```

@@ -1,0 +1,82 @@
+<template>
+  <nav class="navbar navbar-expand-xl navbar-dark fixed-top bg-dark">
+    <div class="container-fluid">
+      <div class="navbar-brand-container col-md-4 col-lg-3">
+        <div>
+          <a class="navbar-brand" href="/"
+            ><img class="navbar-brand" src="../assets/logo.svg" alt="logo" />
+            SentinelGuard</a
+          >
+        </div>
+      </div>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarCollapse"
+        aria-controls="navbarCollapse"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div
+        class="collapse navbar-collapse col-md-8 col-lg-9"
+        id="navbarCollapse"
+      >
+        <ul class="navbar-nav me-auto mb-2 mb-md-0">
+          <DataBase />
+          <UploadPcap />
+          <RealtimeCapture />
+        </ul>
+        <form class="d-flex" role="search">
+          <input
+            class="form-control me-2"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+          />
+          <button class="btn btn-outline-success me-2" type="submit">
+            Search
+          </button>
+        </form>
+        <LogOut />
+      </div>
+    </div>
+  </nav>
+</template>
+
+<script setup>
+import DataBase from "@/components/DataBase.vue";
+import UploadPcap from "@/components/UploadPcap.vue";
+import RealtimeCapture from "@/components/RealtimeCapture.vue";
+// import SearchItem from "@/components/SearchItem.vue";
+import LogOut from "@/components/LogOut.vue";
+</script>
+
+<style lang="scss" scoped>
+nav {
+  font-family: Montserrat, Arial, Helvetica, sans-serif;
+}
+
+// logo
+.container-fluid img {
+  width: 35px;
+  margin-right: 3px;
+}
+
+$brand_column1_width: 20.7%;
+
+// brand
+.navbar-brand-container {
+  font-size: 1.8rem;
+  font-weight: bolder;
+  display: flex;
+  flex-direction: column;
+  align-items: center; // 垂直居中对齐
+}
+
+.navbar {
+  max-height: 65px;
+}
+</style>
