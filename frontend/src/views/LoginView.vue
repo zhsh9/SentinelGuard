@@ -44,20 +44,21 @@
             Remember me
           </label>
         </div>
-        <button class="btn btn-primary w-100 py-2" type="submit">Login</button>
+        <button
+          class="btn btn-primary w-100 py-2"
+          type="submit"
+          @click="showSpinner"
+        >
+          Login
+        </button>
         <p class="my-3 text-body-secondary">&copy; 2024</p>
         <div v-if="errorMessage" class="alert alert-danger" role="alert">
           {{ errorMessage }}
         </div>
       </form>
-      <!-- Loading animation -->
-      <div v-if="loading" class="loading-screen">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
     </main>
   </div>
+  <LoginSpinner class="LoginSpinner" v-if="isSpinnerVisible" />
 </template>
 
 <script>
@@ -65,9 +66,26 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import axios from "axios";
+import LoginSpinner from "@/components/LoginSpinner.vue";
 
 export default {
   name: "LoginView",
+  components: {
+    LoginSpinner,
+  },
+  data() {
+    return {
+      isSpinnerVisible: false,
+    };
+  },
+  methods: {
+    showSpinner() {
+      this.isSpinnerVisible = true;
+      setTimeout(() => {
+        this.isSpinnerVisible = false;
+      }, 2000);
+    },
+  },
   setup() {
     // Variables
     const username = ref("");
@@ -88,6 +106,9 @@ export default {
 
     // Login
     const handleSubmit = async () => {
+      // 给加载动画腾出时间
+      setTimeout(() => {}, 3000);
+
       errorMessage.value = "";
       const path = "http://localhost:8001/api/login";
       const post_body = {

@@ -9,6 +9,8 @@
     Logout
   </button>
 
+  <LogoutSpinner class="LogoutSpinner" v-if="isLogoutSpinnerVisible" />
+
   <!-- Logout Confirmation Modal -->
   <div
     class="modal fade"
@@ -41,7 +43,7 @@
           >
             Close
           </button>
-          <button type="button" class="btn btn-primary" @click="confirmLogout">
+          <button type="button" class="btn btn-primary" @click="handleLogout">
             Confirm Logout
           </button>
         </div>
@@ -50,32 +52,59 @@
   </div>
 </template>
 
-<script setup>
-import { onMounted } from "vue";
+<script>
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Modal } from "bootstrap";
+import LogoutSpinner from "@/components/LogoutSpinner.vue";
 
-const router = useRouter();
-const store = useStore();
+export default {
+  components: {
+    LogoutSpinner,
+  },
+  setup() {
+    const router = useRouter();
+    const store = useStore();
+    const isLogoutSpinnerVisible = ref(false);
+    let modalInstance;
 
-let modalInstance;
+    onMounted(() => {
+      const modalElement = document.getElementById("logoutModal");
+      modalInstance = new Modal(modalElement);
+    });
 
-onMounted(() => {
-  const modalElement = document.getElementById("logoutModal");
-  modalInstance = new Modal(modalElement);
-});
+    function showSpinner() {
+      isLogoutSpinnerVisible.value = true;
+      setTimeout(() => {
+        isLogoutSpinnerVisible.value = false;
+      }, 2000);
+    }
 
-function confirmLogout() {
-  // 关闭模态对话框;
-  if (modalInstance) {
-    modalInstance.hide();
-  }
+    function confirmLogout() {
+      // 关闭模态对话框
+      if (modalInstance) {
+        modalInstance.hide();
+      }
 
-  // 执行登出逻辑
-  store.commit("clearToken");
-  router.push({ name: "login" });
-}
+      // 执行登出逻辑
+      store.commit("clearToken");
+      router.push({ name: "login" });
+    }
+
+    function handleLogout() {
+      showSpinner();
+      setTimeout(() => {
+        confirmLogout();
+      }, 1000);
+    }
+
+    return {
+      isLogoutSpinnerVisible,
+      handleLogout,
+    };
+  },
+};
 </script>
 
 <style lang="scss"></style>

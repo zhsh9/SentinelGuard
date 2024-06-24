@@ -610,7 +610,6 @@ $margin-top: 5px;
 // fixed sidebar
 #app > div:nth-child(3) > div > div > div {
   margin-top: $margin-top;
-  position: fixed;
 }
 
 // main part
