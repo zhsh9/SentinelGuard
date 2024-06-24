@@ -41,7 +41,7 @@ export default {
     updateThemeClass() {
       const isDark =
         document.documentElement.getAttribute("data-bs-theme") === "dark";
-      this.themeClass = isDark ? "text-light" : "text-success";
+      this.themeClass = isDark ? "text-success" : "text-primary";
     },
   },
 };

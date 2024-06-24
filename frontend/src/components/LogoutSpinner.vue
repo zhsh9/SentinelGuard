@@ -77,8 +77,8 @@ export default {
       const isDark =
         document.documentElement.getAttribute("data-bs-theme") === "dark";
       this.overlayThemeClass = isDark ? "overlay-dark" : "";
-      this.barThemeClass = isDark ? "bg-light" : "bg-success";
-      this.textThemeClass = isDark ? "text-light" : "text-success";
+      this.barThemeClass = isDark ? "bg-success" : "bg-primary";
+      this.textThemeClass = isDark ? "text-success" : "text-primary";
     },
   },
 };
