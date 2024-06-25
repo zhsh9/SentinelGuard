@@ -1,0 +1,7 @@
+- [ ] frontend, sidebar
+- [ ] frontend, main table
+- [ ] backend, model design
+- [ ] backend, db management
+- [ ] backend, api for requesting data & related msg|info
+- [ ] backend, ids system|mechanism design
+- [ ] backend, ids detection mechanism
