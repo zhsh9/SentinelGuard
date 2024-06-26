@@ -53,11 +53,11 @@
 </template>
 
 <script>
+import LogoutSpinner from "@/components/LogoutSpinner.vue";
+import { Modal } from "bootstrap";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-import { Modal } from "bootstrap";
-import LogoutSpinner from "@/components/LogoutSpinner.vue";
 
 export default {
   components: {

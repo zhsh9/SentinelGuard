@@ -8,11 +8,12 @@ app = Flask(__name__)
 
 app.config.from_object('config')
 
-CORS(app, resource={r'/*': {
-    'origins': 'http://127.0.0.1:8000',
-    'allow_headers': ["Access-Control-Allow-Origin"],
-}})
+# CORS(app, resource={r'/*': {
+#     'origins': 'http://127.0.0.1:8000',
+#     'allow_headers': ["Access-Control-Allow-Origin"],
+# }})
 
+CORS(app, resource={r'/*': {'origins': '*'}})
 
 # Home page: hello world
 @app.route('/', methods=['GET'])
