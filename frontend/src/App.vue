@@ -3,7 +3,7 @@
     <ToggleTheme />
     <router-view />
   </div>
-  <AppFooter />
+  <!-- <AppFooter /> -->
 </template>
 
 <script setup>
@@ -14,13 +14,12 @@ import "bootstrap/dist/js/bootstrap.js";
 <script>
 // 导入component/ToggleTheme.vue
 import ToggleTheme from "./components/ToggleTheme.vue";
-import AppFooter from "./components/AppFooter.vue";
+// import AppFooter from "./components/AppFooter.vue";
 
 export default {
   name: "App",
   components: {
     ToggleTheme,
-    AppFooter,
   },
   data() {
     return {
