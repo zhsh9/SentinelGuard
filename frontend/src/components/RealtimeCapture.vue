@@ -60,7 +60,7 @@
           >
             Close
           </button>
-          <button type="button" class="btn btn-primary" @click="confirmLogout">
+          <button type="button" class="btn btn-primary" @click="startCapture">
             Start
           </button>
         </div>
@@ -91,7 +91,7 @@
           ></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you really want to logout?</p>
+          <p>Are you sure you really want to stop capturing http traffic?</p>
         </div>
         <div class="modal-footer">
           <button
@@ -101,7 +101,7 @@
           >
             Close
           </button>
-          <button type="button" class="btn btn-primary" @click="confirmLogout">
+          <button type="button" class="btn btn-primary" @click="stopCapture">
             Stop
           </button>
         </div>
@@ -109,6 +109,29 @@
     </div>
   </div>
 </template>
+
+<script setup>
+// 在 Vue 组件文件的顶部导入 Bootstrap 的 JavaScript
+// import "bootstrap/dist/js/bootstrap.bundle.min";
+import { Modal } from "bootstrap";
+import { inject } from "vue";
+
+const timerStore = inject("timerStore");
+
+const startCapture = () => {
+  timerStore.startTimer();
+  const startCaptureModal = document.getElementById("startCaptureModal");
+  const modalInstance = Modal.getInstance(startCaptureModal);
+  modalInstance.hide();
+};
+
+const stopCapture = () => {
+  timerStore.stopTimer();
+  const stopCaptureModal = document.getElementById("stopCaptureModal");
+  const modalInstance = Modal.getInstance(stopCaptureModal);
+  modalInstance.hide();
+};
+</script>
 
 <script>
 export default {
@@ -139,7 +162,7 @@ export default {
 // drop-down menu
 .dropdown-menu.show {
   margin-top: 12px;
-  margin-left: 3px;
+  margin-left: 10px;
   width: auto + 20px;
   border-radius: 0;
 }

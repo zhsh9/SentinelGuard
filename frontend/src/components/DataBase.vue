@@ -363,4 +363,9 @@ export default {
   border-right-width: 0;
   margin-right: 0;
 }
+
+#navbarCollapse > ul > li:nth-child(1) > div {
+  border-left-width: 1px;
+  border-right-width: 1px;
+}
 </style>

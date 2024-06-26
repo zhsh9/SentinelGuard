@@ -9,12 +9,15 @@
 <script setup>
 // import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap/dist/js/bootstrap.js";
+import { provide } from "vue";
+import { useTimerStore } from "./timerStore";
+
+const timerStore = useTimerStore();
+provide("timerStore", timerStore);
 </script>
 
 <script>
-// 导入component/ToggleTheme.vue
 import ToggleTheme from "./components/ToggleTheme.vue";
-// import AppFooter from "./components/AppFooter.vue";
 
 export default {
   name: "App",

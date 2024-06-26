@@ -49,7 +49,9 @@
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Time of Capturing
-              <span class="badge bg-primary rounded-pill">1:56</span>
+              <span class="badge bg-primary rounded-pill">{{
+                formattedTime
+              }}</span>
             </li>
           </ul>
         </div>
@@ -337,6 +339,15 @@
 <script setup>
 // import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap/dist/js/bootstrap.js";
+import { computed, inject } from "vue";
+
+const timerStore = inject("timerStore");
+
+const formattedTime = computed(() => {
+  const minutes = Math.floor(timerStore.time.value / 60);
+  const seconds = timerStore.time.value % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+});
 </script>
 
 <script>
