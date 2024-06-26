@@ -72,4 +72,10 @@ body {
   width: 0;
   height: 0;
 }
+
+// Global modal style
+.modal-content {
+  /* Custom shadow: bottom and right only */
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1), 10px 0 10px rgba(0, 0, 0, 0.1);
+}
 </style>
