@@ -217,7 +217,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="emptyDBModalLabel">Empty Database</h5>
+          <h5 class="modal-title text-danger" id="emptyDBModalLabel">
+            Empty Database
+          </h5>
           <button
             type="button"
             class="btn-close"
@@ -228,7 +230,9 @@
           </button>
         </div>
         <div class="modal-body">
-          <p class="text-danger">Are you sure to empty the current dabatase?</p>
+          <p class="text-danger">
+            ❗️Are you sure to empty the current dabatase?❗️
+          </p>
         </div>
         <div class="modal-footer">
           <button
@@ -264,7 +268,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="deleteDBModalLabel">Delete Database</h5>
+          <h5 class="modal-title text-danger" id="deleteDBModalLabel">
+            Delete Database
+          </h5>
           <button
             type="button"
             class="btn-close"
@@ -276,7 +282,7 @@
         </div>
         <div class="modal-body">
           <p class="text-danger">
-            Are you sure to delete the current database?
+            ❗️Are you sure to delete the current database?❗️
           </p>
         </div>
         <div class="modal-footer">
@@ -368,4 +374,6 @@ export default {
   border-left-width: 1px;
   border-right-width: 1px;
 }
+
+// Hove to trigger dropdown
 </style>
