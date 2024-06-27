@@ -13,11 +13,12 @@
 
 ## Installation
 
-- Flask@3, Flask-CORS, Flask-SQLAlchemy
-- Vue@3, Bootstrap@5.3.3, Popper@2.11.8
+- Flask3, Flask-CORS, Flask-SQLAlchemy, scapy
+- Vue3, Bootstrap 5.3.3, Popper 2.11.8
 
 ```bash
-pip install -r requirement.txt
+cd frontend; yarn install
+cd backend; pip install -r requirement.txt
 ```
 
 ## Configuration
@@ -29,5 +30,6 @@ pip install -r requirement.txt
 
 ```bash
 python backend/app.py
-cd frontend && npm run serve
+cd frontend; npm run serve
+cd frontend; yarn install
 ```

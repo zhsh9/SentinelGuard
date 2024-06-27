@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div
-        class="sidebar border border-right col-md-4 col-lg-3 p-0 bg-body-tertiary rounded-bottom"
+        class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary rounded-bottom"
       >
         <div id="info" class="my-2">
           <a
@@ -43,7 +43,11 @@
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Categories Selected
-              <span class="badge bg-primary rounded-pill">2</span>
+              <span
+                id="categories-selected"
+                class="badge bg-primary rounded-pill"
+                >0</span
+              >
             </li>
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
@@ -81,7 +85,7 @@
             <li
               class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center"
             >
-              Common Vulnerabilities and Exposures
+              CVEs
               <span class="badge bg-primary rounded-pill">2</span>
             </li>
             <li
@@ -148,7 +152,7 @@
         </div>
       </div>
 
-      <main class="ms-sm-auto col-md-8 col-lg-9 px-md-4">
+      <main class="ms-sm-auto col-md-8 col-lg-10 px-md-4">
         <div
           class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
         >
@@ -177,6 +181,7 @@
             <thead>
               <tr>
                 <th scope="col">#</th>
+                <th scope="col">Category</th>
                 <th scope="col">Source IP</th>
                 <th scope="col">Src Port</th>
                 <th scope="col">Destination IP</th>
@@ -184,7 +189,7 @@
                 <th scope="col">Timestamp</th>
                 <th scope="col">Method</th>
                 <th scope="col">Request URI</th>
-                <th scope="col">HTTP Version</th>
+                <th scope="col">Version</th>
                 <th scope="col">Header</th>
                 <th scope="col">Body</th>
               </tr>
@@ -192,6 +197,7 @@
             <tbody>
               <tr>
                 <td>1</td>
+                <td>0</td>
                 <td>192.168.100.100</td>
                 <td>12345</td>
                 <td>192.168.100.200</td>
@@ -205,6 +211,7 @@
               </tr>
               <tr>
                 <td>2</td>
+                <td>0</td>
                 <td>192.168.1.3</td>
                 <td>54321</td>
                 <td>192.168.1.4</td>
@@ -218,6 +225,7 @@
               </tr>
               <tr>
                 <td>3</td>
+                <td>0</td>
                 <td>10.0.0.1</td>
                 <td>8080</td>
                 <td>10.0.0.2</td>
@@ -239,6 +247,7 @@
               </tr>
               <tr>
                 <td>4</td>
+                <td>0</td>
                 <td>172.16.0.1</td>
                 <td>9090</td>
                 <td>172.16.0.2</td>
@@ -252,6 +261,7 @@
               </tr>
               <tr>
                 <td>5</td>
+                <td>0</td>
                 <td>192.168.2.1</td>
                 <td>9999</td>
                 <td>192.168.2.2</td>
@@ -265,6 +275,7 @@
               </tr>
               <tr>
                 <td>6</td>
+                <td>0</td>
                 <td>10.1.1.1</td>
                 <td>1234</td>
                 <td>10.1.1.2</td>
@@ -278,6 +289,7 @@
               </tr>
               <tr>
                 <td>7</td>
+                <td>0</td>
                 <td>172.16.1.1</td>
                 <td>4444</td>
                 <td>172.16.1.2</td>
@@ -291,6 +303,7 @@
               </tr>
               <tr>
                 <td>8</td>
+                <td>0</td>
                 <td>192.168.3.1</td>
                 <td>5555</td>
                 <td>192.168.3.2</td>
@@ -304,6 +317,7 @@
               </tr>
               <tr>
                 <td>9</td>
+                <td>0</td>
                 <td>10.2.2.1</td>
                 <td>6666</td>
                 <td>10.2.2.2</td>
@@ -317,6 +331,7 @@
               </tr>
               <tr>
                 <td>10</td>
+                <td>0</td>
                 <td>172.16.2.1</td>
                 <td>7777</td>
                 <td>172.16.2.2</td>
@@ -449,64 +464,70 @@ hr.fancy-line {
 }
 
 // Main: Table View
+$total-width: 1000px;
+
+$column-widths: (
+  30px,
+  // column
+  20px,
+  // Category
+  70px,
+  // Source IP
+  50px,
+  // Source Port
+  70px,
+  // Destination IP
+  50px,
+  // Destination Port
+  110px,
+  // Timestamp
+  50px,
+  // Request Method
+  90px,
+  // Request URI
+  50px,
+  // HTTP Version
+  300px,
+  // Header
+  110px // Body
+);
+
+@function to-percentage($px) {
+  @return ($px / $total-width) * 100%;
+}
+
 table th,
 table td {
   word-wrap: break-word; /* Ensures content will wrap within the cell */
   white-space: normal; /* Allows wrapping */
-  width: 100px; /* Fixed width for each column */
+  width: 100px; /* Default fixed width for each column */
 }
-th:nth-child(1),
-td:nth-child(1) {
-  width: 40px;
-} /* # column, smaller width */
-th:nth-child(2),
-td:nth-child(2) {
-  width: 120px;
-} /* Source IP */
-th:nth-child(3),
-td:nth-child(3) {
-  width: 80px;
-} /* Source Port */
-th:nth-child(4),
-td:nth-child(4) {
-  width: 120px;
-} /* Destination IP */
-th:nth-child(5),
-td:nth-child(5) {
-  width: 80px;
-} /* Destination Port */
-th:nth-child(6),
-td:nth-child(6) {
-  width: 160px;
-} /* Timestamp */
-th:nth-child(7),
-td:nth-child(7) {
-  width: 100px;
-} /* Request Method */
-th:nth-child(8),
-td:nth-child(8) {
-  width: 200px;
-} /* Request URI */
-th:nth-child(9),
-td:nth-child(9) {
-  width: 100px;
-} /* HTTP Version */
-th:nth-child(10),
-td:nth-child(10) {
-  width: 400px;
-} /* Header */
-th:nth-child(11),
-td:nth-child(11) {
-  width: 200px;
-} /* Body */
+
+@for $i from 1 through length($column-widths) {
+  th:nth-child(#{$i}),
+  td:nth-child(#{$i}) {
+    width: to-percentage(nth($column-widths, $i));
+  }
+}
+
+$primary-color: #78c2ad;
+
+/* Table style */
+tbody tr {
+  transition: all 0.3s ease;
+
+  &:hover {
+    // font-weight: bold;
+    filter: brightness(90%);
+  }
+}
 
 /* Sidebar hover */
 .list-group-item {
   transition: all 0.3s ease;
-}
-
-.list-group-item:hover {
-  font-weight: bold;
-  filter: brightness(90%);
+  &:hover {
+    font-weight: bold;
+    filter: brightness(90%);
+  }
 }
 </style>

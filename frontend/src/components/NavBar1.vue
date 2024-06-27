@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-xl navbar-dark fixed-top bg-dark">
     <div class="container-fluid">
-      <div class="navbar-brand-container col-md-4 col-lg-3">
+      <div class="navbar-brand-container col-md-3 col-lg-2">
         <div>
           <a class="navbar-brand" href="/"
             ><img class="navbar-brand" src="../assets/logo.svg" alt="logo" />
@@ -21,7 +21,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div
-        class="collapse navbar-collapse col-md-8 col-lg-9"
+        class="collapse navbar-collapse col-md-9 col-lg-10"
         id="navbarCollapse"
       >
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
