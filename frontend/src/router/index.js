@@ -31,7 +31,7 @@ router.beforeEach(async (to, from, next) => {
     // 如果没有 token 且目标不是登录页面，则重定向到登录页面
     next({ name: "login" });
   } else if (token) {
-    const path = "http://localhost:8001/api/verify";
+    const path = "/api/verify"; // Use relative path to proxy
     const post_body = { token: token };
 
     try {

@@ -107,7 +107,7 @@ export default {
     // Login
     const handleSubmit = async () => {
       errorMessage.value = "";
-      const path = "http://localhost:8001/api/login";
+      const path = "/api/login"; // Use relative path to proxy requests to backend
       const post_body = {
         username: username.value,
         password: password.value,
