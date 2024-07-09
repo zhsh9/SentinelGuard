@@ -8,11 +8,12 @@ app = Flask(__name__)
 
 app.config.from_object('config')
 
+# Release mode.
 # CORS(app, resource={r'/*': {
 #     'origins': 'http://127.0.0.1:8000',
 #     'allow_headers': ["Access-Control-Allow-Origin"],
 # }})
-
+# Dev mode.
 CORS(app, resource={r'/*': {'origins': '*'}})
 
 # Home page: hello world
@@ -55,7 +56,7 @@ def check_login():
 
 if __name__ == '__main__':
     app.run(
-        host='127.0.0.1',
+        host='0.0.0.0',
         port=8001,
         debug=True,
     )
