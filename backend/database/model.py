@@ -13,8 +13,8 @@ Model Design:
     Header Fields: string (json string)
     Request Body (POST requests only): string (json string)
 """
-import sys
-sys.path.append('..')
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import db
 from datetime import datetime

@@ -1,13 +1,21 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from config import Config
 
 # --------------------------------------------------------------------------------------
 # Configuration
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('config.Config')
+    
+    # Regitser blueprints
+    # from .views import main as main_blueprint
+    # app.register_blueprint(main_blueprint)
+    
+    return app
+
 # Flask Application Init.
-app = Flask(__name__)
-app.config.from_object(Config)
+app = create_app()
 # Used to initialize the SQLAlchemy object and bind it to the Flask application instance.
 db = SQLAlchemy(app)
 
