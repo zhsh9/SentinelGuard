@@ -493,7 +493,7 @@ $column-widths: (
 );
 
 @function to-percentage($px) {
-  @return ($px / $total-width) * 100%;
+  @return calc(#{$px} / #{$total-width} * 100%);
 }
 
 table th,

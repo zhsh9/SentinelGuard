@@ -31,5 +31,5 @@ cd backend; pip install -r requirement.txt
 ```bash
 python backend/app.py
 cd frontend; npm run serve
-cd frontend; yarn install
+cd frontend; yarn serve
 ```
