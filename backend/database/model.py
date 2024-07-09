@@ -6,7 +6,7 @@ Model Design:
     Source Port: string
     Destination IP Address: string
     Destination Port: string
-    Timestamp: string
+    Time: string
     Request Method: string
     Request URI: string
     HTTP Version: string
@@ -16,23 +16,81 @@ Model Design:
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app import db
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.ext.declarative import DeclarativeMeta
 from datetime import datetime
+from app import app, db
+
+# 获取 SQLAlchemy 的 Model 元类
+ModelMeta = type(db.Model)
+
+# 定义一个新的元类，继承 SQLAlchemy 的 Model 元类和自定义的 ModelGenerator 元类
+class CustomModelMeta(ModelMeta, DeclarativeMeta):
+    pass
+
+# 定义一个元类，用于动态生成类
+class ModelGenerator(CustomModelMeta):
+    def __new__(cls, name, bases, dct):
+        dct['id'] = Column(Integer, primary_key=True)
+        dct['category'] = Column(String(64), nullable=False)
+        dct['source_ip'] = Column(String(64), nullable=False)
+        dct['source_port'] = Column(String(64), nullable=False)
+        dct['destination_ip'] = Column(String(64), nullable=False)
+        dct['destination_port'] = Column(String(64), nullable=False)
+        dct['time'] = Column(String(64), default=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        dct['request_method'] = Column(String(16), nullable=False)
+        dct['request_uri'] = Column(String(256), nullable=False)
+        dct['http_version'] = Column(String(16), nullable=False)
+        dct['header_fields'] = Column(Text, nullable=False)  # JSON string
+        dct['request_body'] = Column(Text, nullable=True)  # JSON string, for POST requests only
+
+        def __repr__(self):
+            return (f'<{name} {self.source_ip}:{self.source_port} -> '
+                    f'{self.destination_ip}:{self.destination_port}: '
+                    f'{self.time} - {self.request_method} - {self.request_uri}>')
+
+        dct['__repr__'] = __repr__
+
+        return super(ModelGenerator, cls).__new__(cls, name, bases, dct)
+
+# 使用元类生成 HttpRequestLog 类
+class HttpRequestLog(db.Model, metaclass=ModelGenerator):
+    __tablename__ = 'http_request_log'
+
+def create_dynamic_http_request_log_class(ds: str):
+    """动态创建带有给定时间戳和表名包含时间戳的 HttpRequestLog 类"""
+    class_name = f"{app.config['SQL_CLASS_NAME_PREFIX']}{ds}"
+    table_name = f"{app.config['SQL_TABLE_NAME_PREFIX']}{ds}"
+
+    # 定义类属性和方法
+    class_attributes = {
+        '__tablename__': table_name,
+        '__table_args__': {'sqlite_autoincrement': True, 'extend_existing': True},
+        'id': Column(Integer, primary_key=True),
+        'category': Column(String(64), nullable=False),
+        'source_ip': Column(String(64), nullable=False),
+        'source_port': Column(String(64), nullable=False),
+        'destination_ip': Column(String(64), nullable=False),
+        'destination_port': Column(String(64), nullable=False),
+        'time': Column(String(64), default=datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        'request_method': Column(String(16), nullable=False),
+        'request_uri': Column(String(256), nullable=False),
+        'http_version': Column(String(16), nullable=False),
+        'header_fields': Column(Text, nullable=False),  # JSON string
+        'request_body': Column(Text, nullable=True),  # JSON string, for POST requests only,
+        '__repr__': lambda self: (
+            f'<HttpRequestLog {self.source_ip}:{self.source_port} -> '
+            f'{self.destination_ip}:{self.destination_port}: '
+            f'{self.time} - {self.request_method} - {self.request_uri}>'
+        )
+    }
+
+    # 使用 type 创建类
+    DynamicHttpRequestLog = ModelGenerator(class_name, (db.Model,), class_attributes)
+
+    return DynamicHttpRequestLog, table_name
 
 
-class IntrusionLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(64), nullable=False)
-    source_ip = db.Column(db.String(64), nullable=False)
-    source_port = db.Column(db.String(64), nullable=False)
-    destination_ip = db.Column(db.String(64), nullable=False)
-    destination_port = db.Column(db.String(64), nullable=False)
-    timestamp = db.Column(db.String(64), default=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    request_method = db.Column(db.String(16), nullable=False)
-    request_uri = db.Column(db.String(256), nullable=False)
-    http_version = db.Column(db.String(16), nullable=False)
-    header_fields = db.Column(db.Text, nullable=False)  # JSON string
-    request_body = db.Column(db.Text, nullable=True)  # JSON string, for POST requests only
-
-    def __repr__(self):
-        return f'<IntrusionLog {self.source_ip}:{self.source_port} -> {self.destination_ip}:{self.destination_port}: {self.timestamp} - {self.request_method} - {self.request_uri}'
+# a = create_dynamic_http_request_log_class('20210901120000')
+# b = create_dynamic_http_request_log_class('20210901120001')
+# c = create_dynamic_http_request_log_class('20210901120002')

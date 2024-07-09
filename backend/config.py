@@ -48,6 +48,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQL_CLASS_NAME_PREFIX = r'DynamicHttpRequestLog_'
+    SQL_TABLE_NAME_PREFIX = r'dynamic_http_request_log_'
+    SQL_TIME_FORMAT = r'%Y-%m-%d %H:%M:%S'
 
 
 # Test Config Class

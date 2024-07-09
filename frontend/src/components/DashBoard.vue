@@ -186,7 +186,7 @@
                 <th scope="col">Src Port</th>
                 <th scope="col">Destination IP</th>
                 <th scope="col">Dst Port</th>
-                <th scope="col">Timestamp</th>
+                <th scope="col">Time</th>
                 <th scope="col">Method</th>
                 <th scope="col">Request URI</th>
                 <th scope="col">Version</th>
@@ -480,7 +480,7 @@ $column-widths: (
   50px,
   // Destination Port
   110px,
-  // Timestamp
+  // Time
   50px,
   // Request Method
   90px,
