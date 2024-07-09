@@ -493,7 +493,7 @@ $column-widths: (
 );
 
 @function to-percentage($px) {
-  @return calc(#{$px} / #{$total-width} * 100%);
+  @return $px / $total-width * 100%; // math pkg problem
 }
 
 table th,
@@ -529,5 +529,10 @@ tbody tr {
     font-weight: bold;
     filter: brightness(90%);
   }
+}
+
+/* No margin for quote */
+#info > figure > figcaption {
+  margin-bottom: 0;
 }
 </style>
