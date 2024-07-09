@@ -1,20 +1,24 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-import secrets
-import hashlib
+from config import Config
 
+# --------------------------------------------------------------------------------------
+# Configuration
+# Flask Application Init.
 app = Flask(__name__)
-
-app.config.from_object('config')
+app.config.from_object(Config)
+# Used to initialize the SQLAlchemy object and bind it to the Flask application instance.
+db = SQLAlchemy(app)
 
 # Release mode.
-# CORS(app, resource={r'/*': {
+# CORS(app, resources={r'/*': {
 #     'origins': 'http://127.0.0.1:8000',
 #     'allow_headers': ["Access-Control-Allow-Origin"],
 # }})
 # Dev mode.
-CORS(app, resource={r'/*': {'origins': '*'}})
+CORS(app, resources={r'/*': {'origins': '*'}})
+# --------------------------------------------------------------------------------------
 
 # Home page: hello world
 @app.route('/', methods=['GET'])
@@ -22,38 +26,21 @@ def index():
     return "Hello world!!! I'm zhsh aka qwe."
 
 
+# --------------------------------------------------------------------------------------
 # API: Check username and password
-@app.route('/api/login', methods=['POST'])
-def login():
-    if not request.json or not 'username' in request.json or not 'password' in request.json:
-        return jsonify({'error': 'Missing username or password'}), 400
-    # Check username and password
-    username = request.json['username']
-    _password = request.json['password']
-    password = hashlib.sha256(_password.encode('utf-8')).hexdigest()
-
-    if username == app.config['USERNAME'] and password == app.config['PASSWORD']:
-        token = secrets.token_hex(16)  # Generate a new token
-        app.config['TOKEN'].append(token)
-        return jsonify({'token': token}), 200
-    else:
-        return jsonify({'error': 'Invalid username or password'}), 400
+#      Check login status
+from login_route import *
+# --------------------------------------------------------------------------------------
 
 
-# API: Check login status
-@app.route('/api/verify', methods=['POST'])
-def check_login():
-    if not request.json or not 'token' in request.json:
-        return jsonify({'error': 'Missing token'}), 400
-
-    token = request.json['token']
-
-    if token in app.config['TOKEN']:
-        return jsonify({'status': '200', 'msg': 'Logged in'}), 200
-    else:
-        return jsonify({'status': '401', 'msg': 'Invalid token'}), 401
+# --------------------------------------------------------------------------------------
+# API: Database
+from db_route import *
+# --------------------------------------------------------------------------------------
 
 
+# --------------------------------------------------------------------------------------
+# Flask Application Executing:
 if __name__ == '__main__':
     app.run(
         host='0.0.0.0',
