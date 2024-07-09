@@ -13,7 +13,7 @@
 
 ## Installation
 
-- Flask3, Flask-CORS, Flask-SQLAlchemy, scapy
+- Flask3, Flask-SQLAlchemy, Scapy
 - Vue3, Bootstrap 5.3.3, Popper 2.11.8
 
 ```bash
@@ -23,8 +23,8 @@ cd backend; pip install -r requirement.txt
 
 ## Configuration
 
-- Backend: `config.py`
-- Frontend: `vue.config.js`
+- Backend: `./backend/config.py`
+- Frontend: `./frontend/vue.config.js`
 
 ## Usage
 
