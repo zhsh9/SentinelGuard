@@ -51,6 +51,8 @@ class Config:
     SQL_CLASS_NAME_PREFIX = r'DynamicHttpRequestLog_'
     SQL_TABLE_NAME_PREFIX = r'dynamic_http_request_log_'
     SQL_TIME_FORMAT = r'%Y-%m-%d %H:%M:%S'
+    
+    TABLES = {}
 
 
 # Test Config Class

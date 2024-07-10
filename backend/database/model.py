@@ -17,7 +17,7 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sqlalchemy import Column, Integer, String, Text
-from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from datetime import datetime
 from app import app, db
 
