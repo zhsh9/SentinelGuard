@@ -1,22 +1,37 @@
+"""
+API for database operations
+- /api/db/init: 初始化数据库和环境变量
+- /api/db/create: 创建表
+- /api/db/use: 切换表
+- /api/db/drop: 删除表
+- /api/db/drop_all: 删除所有表
+- /api/db/info: 列出所有表，以及表环境变量
+- /api/db/<table_name>/info: 获取表的信息
+- /api/db/<table_name>/insert: 插入数据
+- /api/db/<table_name>/select: 查询数据
+- /api/db/<table_name>/delete: 删除数据
+- /api/db/<table_name>/clean: 清空表
+"""
+import json
 from app import app, db
 from flask import jsonify, request
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from database.model import *
-from sqlalchemy import inspect
-import json
-from copy import deepcopy
+import requests
+# 数据库操作
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Table, MetaData, inspect, select, func, insert
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import SQLAlchemyError
 
 """
 tables: maintain all tables created in the database
 {
     'formatted_time1': {
-        'class': HttpRequestLog_20210901120000,
         'table_name': 'http_request_log_20210901120000',
         'using': True,
     },
     'formatted_time2': {
-        'class': HttpRequestLog_20220901120000,
         'table_name': 'http_request_log_20220901120000',
         'using': False,
     },
@@ -24,7 +39,6 @@ tables: maintain all tables created in the database
 """
 # 用于存储表信息的字典
 tables = app.config['TABLES']
-tables_info = {}
 initialized = False  # 初始化标志
 
 # 把 tables 转换为格式化的字符串
@@ -42,62 +56,58 @@ def format_log_dict(log_dict):
     formatted_str += "}"
     return formatted_str
 
-# Init: check existing tables in the database -> tables
+# 根据 time | 表名 把当前表设置为正在使用
+# 可以接受的输入为：20210901120000, dynamic_http_request_log_20210901120000
+def set_using(table_name: str):
+    if table_name.startswith(app.config['SQL_TABLE_NAME_PREFIX']):
+        # 表名就符合规则的 dynamic_http_request_log_20210901120000 格式
+        time = table_name.split('_')[-1]
+    else:
+        # 构造表名
+        time = table_name
+        table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+    
+    # 调用 use API 设置当前的 table_name 为 using=True 的状态
+    use_api_url = request.host_url + 'api/db/use'
+    response = requests.post(use_api_url, json={'table_name': table_name})
+    
+    # 判断修改表的状态为正在使用成功与否
+    if response.status_code != 200:
+        return {'error': 'Failed to set table as using'}, False, response.status_code, None, None
+    else:
+        return {'message': 'Successfully set table as using'}, True, response.status_code, table_name, time
+
+"""
+第一部分: DCL (Data Control Language) 数据控制
+- /api/db/init: 初始化数据库和环境变量
+- /api/db/create: 创建表
+- /api/db/use: 切换表
+- /api/db/drop: 删除表
+- /api/db/drop_all: 删除所有表
+- /api/db/info: 列出所有表，以及表环境变量
+"""
+
 # 启动时，检查数据库中已经存在的表，添加到 tables 中
-def init_tables():
+@app.before_request
+def init():
     global initialized
     if not initialized:
         with app.app_context():
             inspector = inspect(db.engine)
             table_names = inspector.get_table_names()
             
+            # 刚启动的时候，没有表是被使用的
             for table_name in table_names:
-                if table_name == 'http_request_log':
-                    time = datetime.now().strftime('%Y%m%d%H%M%S')
-                    table_cls = HttpRequestLog
-                else:
-                    time = table_name.split('_')[-1]
-                    # 动态创建类
-                    table_cls, _ = create_dynamic_http_request_log_class(time)
-                
+                time = table_name.split('_')[-1]
                 tables[time] = {
-                    'class': table_cls,
                     'table_name': table_name,
                     'using': False,
                 }
 
         initialized = True
 
-# 使用 before_request 钩子在每次请求前检查初始化
-@app.before_request
-def before_request():
-    init_tables()
-
-# API: Initialize the database
-@app.route('/api/db/init', methods=['GET', 'POST'])
-def init_db():
-    try:
-        # 使用 inspect 来检查数据库是否已经初始化
-        inspector = inspect(db.engine)
-        if inspector.has_table('http_request_log'):
-            return jsonify({'status': '200', 'msg': 'Database is already initialized'}), 200
-        
-        # 创建所有表(http_request_log)
-        db.create_all()
-        time = datetime.now().strftime('%Y%m%d%H%M%S')
-        tables[time] = {
-            'class': HttpRequestLog,
-            'table_name': f'http_request_log',
-            'using': False,
-        }
-        
-        return jsonify({'status': '200', 'msg': 'Database initialized'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
 # API: Create a new table for HttpRequestLog based on time
-@app.route('/api/db/create_table', methods=['POST'])
+@app.route('/api/db/create', methods=['POST'])
 def create_table():
     if request.content_type != 'application/json':
         return jsonify({'error': 'Content-Type must be application/json'}), 415
@@ -116,11 +126,10 @@ def create_table():
         if not inspector.has_table(table_name):
             # 创建表
             tables[time] = {
-                'class': new_table,
                 'table_name': table_name,
-                'using': True,
+                'using': False,
             }
-            tables[time]['class'].__table__.create(db.engine)
+            new_table.__table__.create(db.engine)
             return jsonify({'status': '200', 'message': f'Table {table_name} created successfully'}), 200
         else:
             return jsonify({'status': '200', 'message': f'Table {table_name} already exists'}), 200
@@ -130,104 +139,54 @@ def create_table():
     except ValueError as e:
         return jsonify({'error': 'Invalid time format. Expected format: YYYY-MM-DD HH:MM:SS'}), 400
 
-def is_valid_datetime_format(date_string):
-    try:
-        # 尝试解析字符串为日期时间对象
-        datetime.strptime(date_string, app.config['SQL_TIME_FORMAT'])
-        return True
-    except ValueError:
-        # 如果解析失败，抛出 ValueError 异常
-        return False
+# API: 定义正在使用的表名 using=True
+@app.route('/api/db/use', methods=['GET', 'POST'])
+def change_using():
+    if request.method == 'GET':
+        # 如果是 GET 请求，返回当前正在使用的表名
+        if True in [tables[key]['using'] for key in tables]:
+            current_using_tables = [tables[key]['table_name'] for key in tables if tables[key]['using']]
+            if len(current_using_tables) == 1:
+                return jsonify({'status': '200', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
+            else:
+                # Only one table is allowed to configured as using
+                # Set all tables to using=False
+                for key in tables:
+                    tables[key]['using'] = False
+                return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
+        else:
+            return jsonify({'status': '200', 'msg': 'No table is currently being used'}), 200
+    elif request.method == 'POST':
+        # 如果是 POST 请求，更改正在使用的表名
+        if request.content_type != 'application/json':
+            return jsonify({'error': 'Content-Type must be application/json'}), 415
 
-# API: Insert a record into HttpRequestLog table
-@app.route('/api/db/insert', methods=['POST'])
-def insert_record():
-    if request.content_type != 'application/json':
-        return jsonify({'error': 'Content-Type must be application/json'}), 415
+        time_str = request.json.get('table_name')
+        time = time_str.split('_')[-1]
 
-    data = request.json
-    table_name = data.get('table_name')
-    time = table_name.split('_')[-1]
-
-    if not table_name or time not in tables or not tables[time]['using']:
-        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
-
-    required_fields = [
-        'category', 'source_ip', 'source_port', 'destination_ip', 'destination_port',
-        'request_method', 'request_uri', 'http_version', 'header_fields'
-    ]
-
-    if not all(field in data for field in required_fields):
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    try:
-        table_cls = tables[time]['class']
-        if table_cls is None:
-            return jsonify({'error': 'Table class not found'}), 500
+        # 检查表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
+        if not time_str or time not in tables.keys():
+            return jsonify({'error': 'Invalid table name'}), 400
         
-        # 检查 time 的格式是否正确
-        time = data.get('time', None)
-        if time is None or not is_valid_datetime_format(time):
-            time = datetime.now().strftime(app.config['SQL_TIME_FORMAT'])
+        # 构造表名
+        table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(table_name):
+            return jsonify({'error': 'Table not found'}), 404
         
-        record = table_cls(
-            category=data['category'],
-            source_ip=data['source_ip'],
-            source_port=data['source_port'],
-            destination_ip=data['destination_ip'],
-            destination_port=data['destination_port'],
-            time=time,
-            request_method=data['request_method'],
-            request_uri=data['request_uri'],
-            http_version=data['http_version'],
-            header_fields=data['header_fields'],
-            request_body=data.get('request_body')
-        )
-        db.session.add(record)
-        db.session.commit()
-        return jsonify({'status': '200', 'msg': 'Record inserted'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-# API: Query records from HttpRequestLog table
-@app.route('/api/db/query', methods=['POST'])
-def query_records():
-    if request.content_type != 'application/json':
-        return jsonify({'error': 'Content-Type must be application/json'}), 415
-
-    data = request.json
-    table_name = data.get('table_name')
-    time = table_name.split('_')[-1]
-    
-    if not table_name or time not in tables or not tables[time]['using']:
-        return jsonify({'error': 'Invalid or inactive table name'}), 400
-
-    try:
-        table_cls = tables[time]['class']
-        if table_cls is None:
-            return jsonify({'error': 'Table class not found'}), 500
+        # 检查表是否正在被使用
+        if not tables[time]['using']:
+            # 寻找当前正在使用的表，置为不使用
+            for key in tables:
+                if tables[key]['using']:
+                    tables[key]['using'] = False
+                    break
+            # 切换正在使用的表
+            tables[time]['using'] = True
         
-        records = db.session.query(table_cls).all()
-        result = [
-            {
-                'id': record.id,
-                'category': record.category,
-                'source_ip': record.source_ip,
-                'source_port': record.source_port,
-                'destination_ip': record.destination_ip,
-                'destination_port': record.destination_port,
-                'time': record.time,
-                'request_method': record.request_method,
-                'request_uri': record.request_uri,
-                'http_version': record.http_version,
-                'header_fields': record.header_fields,
-                'request_body': record.request_body
-            } for record in records
-        ]
-        return jsonify({'status': '200', 'data': result}), 200
-    except SQLAlchemyError as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'status': '200', 'msg': f'Table {table_name} is now being used'}), 200
 
 # API: Drop HttpRequestLog table
 @app.route('/api/db/drop', methods=['POST'])
@@ -235,21 +194,30 @@ def drop_table():
     if request.content_type != 'application/json':
         return jsonify({'error': 'Content-Type must be application/json'}), 415
 
-    table_name = request.json.get('table_name')
-    time = table_name.split('_')[-1]
+    time_str = request.json.get('table_name') # 可以输入一长串表名字符串，也可以只输入最后的时间格式
+    time = time_str.split('_')[-1]
 
-    if not table_name or time not in tables or not tables[time]['using']:
+    # 检查输入是否符合格式
+    if not time_str or time not in tables.keys() or not tables[time]['using']:
         return jsonify({'error': 'Invalid or inactive table name'}), 400
+    
+    # 构造表名
+    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+
+    # 检查表是否存在
+    inspector = inspect(db.engine)
+    if not inspector.has_table(table_name):
+        return jsonify({'error': 'Table not found'}), 404
 
     try:
-        table_cls = tables[time]['class']
-        if table_cls is None:
-            return jsonify({'error': 'Table class not found'}), 500
-        
-        table_cls.__table__.drop(db.engine)
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=db.engine)
+
+        table.drop(db.engine)
         del tables[time]
+
         db.session.commit()
-        return jsonify({'status': '200', 'msg': f'Table {app.config['SQL_TABLE_NAME_PREFIX']}{table_name} dropped'}), 200
+        return jsonify({'status': '200', 'msg': f'Table {table_name} dropped'}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -268,61 +236,185 @@ def drop_all_tables():
         return jsonify({'error': str(e)}), 500
     
 # API: 定义查看所有表名的 API 端点
-@app.route('/api/db/tables', methods=['GET'])
+@app.route('/api/db/info', methods=['GET'])
 def list_tables():
     inspector = db.inspect(db.engine)
     ret_tables = inspector.get_table_names()
 
-    ret_tables_str = format_log_dict(tables)
-    print(ret_tables_str)
+    # ret_tables_str = format_log_dict(tables)
+    # print(ret_tables_str)
     
-    # string tables
-    tables_info = deepcopy(tables)
-    for key in tables_info:
-        tables_info[key]['class'] = tables_info[key]['class'].__name__
+    # 检查数据库中的表和环境变量中的表是否一致
+    checker1 = set(ret_tables)
+    checker2 = set([v['table_name'] for v in tables.values()])
+    if len(checker1 - checker2) != 0:
+        return jsonify({'error': 'Database and environment variables are inconsistent'}), 500
     
-    return jsonify({'tables': ret_tables, 'tables_info': tables_info}), 200
+    return jsonify({'tables': ret_tables, 'tables_verbose': tables}), 200
 
-# API: 定义正在使用的表名 using=True
-@app.route('/api/db/using', methods=['GET', 'POST'])
-def change_using():
-    if request.method == 'GET':
-        # 如果是 GET 请求，返回当前正在使用的表名
-        if True in [tables[key]['using'] for key in tables]:
-            current_using_tables = [tables[key]['table_name'] for key in tables if tables[key]['using']]
-            if len(current_using_tables) == 1:
-                return jsonify({'status': '200', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
-            else:
-                # Only one table is allowed to configured as using
-                return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
-        else:
-            return jsonify({'status': '200', 'msg': 'No table is currently being used'}), 200
-    elif request.method == 'POST':
-        # 如果是 POST 请求，更改正在使用的表名
-        if request.content_type != 'application/json':
-            return jsonify({'error': 'Content-Type must be application/json'}), 415
+def is_valid_datetime_format(date_string):
+    try:
+        # 尝试解析字符串为日期时间对象
+        datetime.strptime(date_string, app.config['SQL_TIME_FORMAT'])
+        return True
+    except ValueError:
+        # 如果解析失败，抛出 ValueError 异常
+        return False
 
-        table_name = request.json.get('table_name')
-        time = table_name.split('_')[-1]
+"""
+第二个部分: DML (Data Manipulation Language) 数据操作, DQL (Data Query Language) 数据查询
+- /api/db/<table_name>/info: 获取表的信息
+- /api/db/<table_name>/insert: 插入数据
+- /api/db/<table_name>/select: 查询数据
+- /api/db/<table_name>/delete: 删除数据
+- /api/db/<table_name>/clean: 清空表
+"""
 
-        # 检查表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
-        if not table_name or time not in tables or not tables[time]['using']:
-            table_cls = tables[time]['class']
-            if table_cls is None:
-                return jsonify({'error': 'Table class not found'}), 500
-            
-            # TODO BUG
-            current_using_tables = [key for key in tables if tables[key]['using']]
-            if len(current_using_tables) == 1:
-                tables[current_using_tables[0]]['using'] = False
-                tables[time]['using'] = True
-                return jsonify({'status': '200', 'msg': f'Current using table switch to {table_name}'}), 200
-            elif len(current_using_tables) == 0:
-                tables[current_using_tables[0]]['using'] = False
-                tables[time]['using'] = True
-                return jsonify({'status': '200', 'msg': 'No table is currently being used. Current using table switch to {table_name}'}), 200
-            else:
-                # Only one table is allowed to configured as using
-                return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
-        else:
-            return jsonify({'error': 'Invalid table name'}), 400
+# 获取这个表的相关信息
+@app.route('/api/db/<table_name>/info', methods=['GET'])
+def get_table_info(table_name):
+    # 可以输入一长串表名字符串，也可以只输入最后的时间格式
+    time_str = table_name
+    time = time_str.split('_')[-1]
+
+    # 检查输入是否符合格式
+    if not time_str or time not in tables.keys():
+        return jsonify({'error': 'Invalid table name'}), 400
+    
+    # 构造表名
+    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+    
+    # 检查表是否存在
+    inspector = inspect(db.engine)
+    if not inspector.has_table(table_name):
+        return jsonify({'error': 'Table not found'}), 404
+    
+    # 获取表的结构
+    metadata = MetaData()
+    table = Table(table_name, metadata, autoload_with=db.engine)
+    columns = [column.name for column in table.columns]
+    
+    # 获取表当前含有的记录数量
+    with db.session() as session:
+        num_records = session.query(table).count()
+
+    return jsonify(dict([
+        ('table_name', table_name),
+        ('using', tables[time]['using']),
+        ('columns', columns),
+        ('num_records', num_records)
+    ])), 200
+
+# API: Insert a record into HttpRequestLog table
+@app.route('/api/db/<table_name>/insert', methods=['POST'])
+def insert_record(table_name):
+    mesg, is_done, status_code, table_name, time = set_using(table_name)
+
+    if not is_done:
+        return jsonify(mesg), status_code
+
+    # 检查输入是否符合格式
+    if not table_name or time not in tables.keys() or not tables[time]['using']:
+        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
+    
+    # 如果不是 POST 请求直接抛错
+    if request.content_type != 'application/json':
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+
+    data = request.json
+
+    required_fields = [
+        'category', 'source_ip', 'source_port', 'destination_ip', 'destination_port',
+        'request_method', 'request_uri', 'http_version', 'header_fields'
+    ]
+
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    try:
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(table_name):
+            return jsonify({'error': 'Table not found'}), 404
+        
+        # 利用反射，获取表的结构
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=db.engine)
+        
+        # 检查 time 的格式是否正确，如果不存在或者格式不正确，则使用当前时间
+        time = data.get('time', None)
+        if time is None or not is_valid_datetime_format(time):
+            time = datetime.now().strftime(app.config['SQL_TIME_FORMAT'])
+        
+        # 创建记录
+        record = {
+            'category': data['category'],
+            'source_ip': data['source_ip'],
+            'source_port': data['source_port'],
+            'destination_ip': data['destination_ip'],
+            'destination_port': data['destination_port'],
+            'time': time,
+            'request_method': data['request_method'],
+            'request_uri': data['request_uri'],
+            'http_version': data['http_version'],
+            'header_fields': data['header_fields'],
+            'request_body': data.get('request_body')
+        }
+        
+        # 插入记录
+        stmt = insert(table).values(record)
+        with db.engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
+        
+        # 插入成功返回
+        return jsonify({'status': '200', 'msg': 'Record inserted', 'data': record}), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# API: 查询表中的记录
+@app.route('/api/db/<table_name>/select', methods=['GET'])
+def query_records(table_name):
+    mesg, is_done, status_code, table_name, time = set_using(table_name)
+
+    if not is_done:
+        return jsonify(mesg), status_code
+
+    # 检查输入是否符合格式
+    if not table_name or time not in tables.keys() or not tables[time]['using']:
+        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
+
+    try:
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(table_name):
+            return jsonify({'error': 'Table not found'}), 404
+        
+        # 动态加载表实例
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=db.engine)
+
+        # 查询所有记录
+        with db.session() as session:
+            records = session.query(table).all()
+        
+        print(records)
+
+        # 转换记录为字典列表
+        result = [
+            {column.name: getattr(record, column.name) for column in table.columns}
+            for record in records
+        ]
+
+        return jsonify({'status': '200', 'data': result}), 200
+    except SQLAlchemyError as e:
+        # 记录并返回详细错误信息
+        error_details = str(e.__dict__.get('orig', e))
+        app.logger.error(f"SQLAlchemyError: {error_details}")
+        return jsonify({'error': error_details}), 500
+    except Exception as e:
+        # 捕获所有其他异常并记录
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({'error': str(e)}), 500

@@ -1,5 +1,5 @@
 """
-Model Design:
+Model Design: DDL (Data Definition Language)
     ID: int
     Category: string
     Source IP Address: string
@@ -54,8 +54,6 @@ class ModelGenerator(CustomModelMeta):
         return super(ModelGenerator, cls).__new__(cls, name, bases, dct)
 
 # 使用元类生成 HttpRequestLog 类
-class HttpRequestLog(db.Model, metaclass=ModelGenerator):
-    __tablename__ = 'http_request_log'
 
 def create_dynamic_http_request_log_class(ds: str):
     """动态创建带有给定时间戳和表名包含时间戳的 HttpRequestLog 类"""
@@ -90,7 +88,12 @@ def create_dynamic_http_request_log_class(ds: str):
 
     return DynamicHttpRequestLog, table_name
 
+# 创建表的方式1
+# class HttpRequestLog(db.Model, metaclass=ModelGenerator):
+#     __tablename__ = 'http_request_log'
 
+# 创建表的方式2
+# 根据当前时间(format: %Y%m%d%H%M%S) 去创建相同格式的表
 # a = create_dynamic_http_request_log_class('20210901120000')
 # b = create_dynamic_http_request_log_class('20210901120001')
 # c = create_dynamic_http_request_log_class('20210901120002')
