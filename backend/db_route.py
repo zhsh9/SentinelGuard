@@ -130,6 +130,7 @@ def create_table():
                 'using': False,
             }
             new_table.__table__.create(db.engine)
+            set_using(table_name)
             return jsonify({'status': '200', 'message': f'Table {table_name} created successfully'}), 200
         else:
             return jsonify({'status': '200', 'message': f'Table {table_name} already exists'}), 200
@@ -143,50 +144,43 @@ def create_table():
 @app.route('/api/db/use', methods=['GET', 'POST'])
 def change_using():
     if request.method == 'GET':
-        # 如果是 GET 请求，返回当前正在使用的表名
-        if True in [tables[key]['using'] for key in tables]:
-            current_using_tables = [tables[key]['table_name'] for key in tables if tables[key]['using']]
-            if len(current_using_tables) == 1:
-                return jsonify({'status': '200', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
-            else:
-                # Only one table is allowed to configured as using
-                # Set all tables to using=False
-                for key in tables:
-                    tables[key]['using'] = False
-                return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
-        else:
-            return jsonify({'status': '200', 'msg': 'No table is currently being used'}), 200
+        # 如果是 GET 请求，更改正在使用的表名
+        time_str = request.args.get('table_name') # http://localhost:8001/api/db/use?table_name=20240701100000
     elif request.method == 'POST':
         # 如果是 POST 请求，更改正在使用的表名
         if request.content_type != 'application/json':
             return jsonify({'error': 'Content-Type must be application/json'}), 415
 
         time_str = request.json.get('table_name')
-        time = time_str.split('_')[-1]
+    
+    if time_str is None:
+        return jsonify({'error': 'Table name is required'}), 400
 
-        # 检查表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
-        if not time_str or time not in tables.keys():
-            return jsonify({'error': 'Invalid table name'}), 400
-        
-        # 构造表名
-        table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+    time = time_str.split('_')[-1]
 
-        # 检查表是否存在
-        inspector = inspect(db.engine)
-        if not inspector.has_table(table_name):
-            return jsonify({'error': 'Table not found'}), 404
-        
-        # 检查表是否正在被使用
-        if not tables[time]['using']:
-            # 寻找当前正在使用的表，置为不使用
-            for key in tables:
-                if tables[key]['using']:
-                    tables[key]['using'] = False
-                    break
-            # 切换正在使用的表
-            tables[time]['using'] = True
-        
-        return jsonify({'status': '200', 'msg': f'Table {table_name} is now being used'}), 200
+    # 检查表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
+    if not time_str or time not in tables.keys():
+        return jsonify({'error': 'Invalid table name'}), 400
+    
+    # 构造表名
+    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+
+    # 检查表是否存在
+    inspector = inspect(db.engine)
+    if not inspector.has_table(table_name):
+        return jsonify({'error': 'Table not found'}), 404
+    
+    # 检查表是否正在被使用
+    if not tables[time]['using']:
+        # 寻找当前正在使用的表，置为不使用
+        for key in tables:
+            if tables[key]['using']:
+                tables[key]['using'] = False
+                break
+        # 切换正在使用的表
+        tables[time]['using'] = True
+    
+    return jsonify({'status': '200', 'msg': f'Table {table_name} is now being used'}), 200
 
 # API: Drop HttpRequestLog table
 @app.route('/api/db/drop', methods=['POST'])
@@ -361,7 +355,7 @@ def insert_record(table_name):
             'request_body': data.get('request_body')
         }
         
-        # 插入记录
+        # 插入记录a
         stmt = insert(table).values(record)
         with db.engine.connect() as conn:
             conn.execute(stmt)
@@ -400,7 +394,7 @@ def query_records(table_name):
         with db.session() as session:
             records = session.query(table).all()
         
-        print(records)
+        # print(records)
 
         # 转换记录为字典列表
         result = [
@@ -503,3 +497,24 @@ def clean_table(table_name):
         # 捕获所有其他异常并记录
         app.logger.error(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+"""
+API:
+- /api/db/cur_db: get current using db
+"""
+
+@app.route('/api/db/cur_db', methods=['GET'])
+def get_cur_db():
+    if True in [tables[key]['using'] for key in tables]:
+        current_using_tables = [tables[key]['table_name'] for key in tables if tables[key]['using']]
+        if len(current_using_tables) == 1:
+            return jsonify({'status': '200', 'table_name': f'{current_using_tables[0]}', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
+        else:
+            # Only one table is allowed to configured as using
+            # Set all tables to using=False
+            for key in tables:
+                tables[key]['using'] = False
+            return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
+    else:
+        return jsonify({'status': '200', 'msg': 'No table is currently being used'}), 200
