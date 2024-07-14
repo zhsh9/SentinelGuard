@@ -81,6 +81,11 @@ class IDS:
 
         return self.i_class["Unclassified"]
 
+
+# 初始化 IDS 实例
+ids_system = IDS(whitelist, blacklist, rules, i_class)
+
+
 if __name__ == '__main__':
     # 示例 http_data
     http_data = {
@@ -96,9 +101,6 @@ if __name__ == '__main__':
         'header_fields': json.dumps({'User-Agent': 'Mozilla/5.0'}, ensure_ascii=False),
         'request_body': json.dumps({}, ensure_ascii=False)
     }
-
-    # 初始化 IDS 实例
-    ids_system = IDS(whitelist, blacklist, rules, i_class)
     
     # 调用 IDS 检测函数
     result = ids_system.detect(http_data)

@@ -37,7 +37,7 @@ def process_packet(packet):
             
             # ----------------------------------------------------------------------------
             # 在这里调用IDS的逻辑，对http_data进行检测
-            i_class = ids(http_data) # return IDS class
+            i_class = ids_system.detect(http_data) # return IDS class
             http_data['category'] = i_class
             # ----------------------------------------------------------------------------
             
