@@ -1,0 +1,11 @@
+[
+    {
+        "request_method": "POST",
+        "request_uri": "/admin"
+    },
+    {
+        "request_method": "GET",
+        "request_uri": "/login",
+        "header_fields": "{\"User-Agent\": \"MaliciousBot\"}"
+    }
+]
