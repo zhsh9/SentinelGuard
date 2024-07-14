@@ -16,6 +16,7 @@ http_data = {
 }
 """
 
+import os
 import json
 from datetime import datetime
 
@@ -26,11 +27,20 @@ def load_json(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
 
-# 加载白名单、黑名单和规则
-whitelist = set(load_json('ip_whitelist.json'))
-blacklist = set(load_json('ip_blacklist.json'))
-rules = load_json('rules.json')
-i_class = load_json(CONFIG_FILE_PATH)
+# 获取当前脚本所在目录
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 构建绝对路径
+whitelist_path = os.path.join(current_dir, 'ip_whitelist.json')
+blacklist_path = os.path.join(current_dir, 'ip_blacklist.json')
+rules_path = os.path.join(current_dir, 'rules.json')
+i_class_path = os.path.join(current_dir, CONFIG_FILE_PATH)
+
+# 加载 JSON 文件
+whitelist = set(load_json(whitelist_path))
+blacklist = set(load_json(blacklist_path))
+rules = load_json(rules_path)
+i_class = load_json(i_class_path)
 
 def match_rules(http_data, rules):
     # 匹配规则

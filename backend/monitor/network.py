@@ -3,8 +3,12 @@ import requests
 import json
 import re
 from datetime import datetime
-import sys; sys.path.append('../')
-from detect.ids import *
+
+# 将项目根目录添加到 sys.path
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from backend.detect.ids import *
+
 
 HOST_URL = 'http://localhost:8001/'
 
