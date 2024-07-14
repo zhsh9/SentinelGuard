@@ -45,6 +45,7 @@ def process_packet(packet):
             http_data['category'] = i_class
             # ----------------------------------------------------------------------------
             
+            # 把检测完毕的数据插入数据库
             response = insert_http_data(http_data)
             if response:
                 print(response.json())
