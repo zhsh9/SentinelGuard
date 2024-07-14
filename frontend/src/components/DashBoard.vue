@@ -181,10 +181,10 @@
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">Category</th>
-                <th scope="col">Source IP</th>
+                <th scope="col">Cate</th>
+                <th scope="col">Src IP</th>
                 <th scope="col">Src Port</th>
-                <th scope="col">Destination IP</th>
+                <th scope="col">Dst IP</th>
                 <th scope="col">Dst Port</th>
                 <th scope="col">Time</th>
                 <th scope="col">Method</th>
@@ -195,153 +195,19 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td>0</td>
-                <td>192.168.100.100</td>
-                <td>12345</td>
-                <td>192.168.100.200</td>
-                <td>80</td>
-                <td>2024-06-26 10:00:00</td>
-                <td>GET</td>
-                <td>/home</td>
-                <td>HTTP/1.1</td>
-                <td>Accept: */*</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>0</td>
-                <td>192.168.1.3</td>
-                <td>54321</td>
-                <td>192.168.1.4</td>
-                <td>443</td>
-                <td>2024-06-26 10:05:00</td>
-                <td>POST</td>
-                <td>/api/data</td>
-                <td>HTTP/2</td>
-                <td>Content-Type: application/json</td>
-                <td>{"key":"value"}</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>0</td>
-                <td>10.0.0.1</td>
-                <td>8080</td>
-                <td>10.0.0.2</td>
-                <td>80</td>
-                <td>2024-06-26 10:10:00</td>
-                <td>PUT</td>
-                <td>/update</td>
-                <td>HTTP/1.1</td>
-                <td>
-                  Host: www.example.com User-Agent: Mozilla/5.0 (Windows NT
-                  10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)
-                  Chrome/91.0.4472.124 Safari/537.36 Accept: application/json
-                  Accept-Language: en-US,en;q=0.5 Accept-Encoding: gzip,
-                  deflate, br Connection: keep-alive Content-Type:
-                  application/x-www-form-urlencoded Content-Length: 27 Cookie:
-                  sessionId=abc123
-                </td>
-                <td>{"update":"data"}</td>
-              </tr>
-              <tr>
-                <td>4</td>
-                <td>0</td>
-                <td>172.16.0.1</td>
-                <td>9090</td>
-                <td>172.16.0.2</td>
-                <td>443</td>
-                <td>2024-06-26 10:15:00</td>
-                <td>DELETE</td>
-                <td>/delete</td>
-                <td>HTTP/1.1</td>
-                <td>Cache-Control: no-cache</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>5</td>
-                <td>0</td>
-                <td>192.168.2.1</td>
-                <td>9999</td>
-                <td>192.168.2.2</td>
-                <td>80</td>
-                <td>2024-06-26 10:20:00</td>
-                <td>HEAD</td>
-                <td>/head</td>
-                <td>HTTP/1.1</td>
-                <td>User-Agent: CustomClient/1.0</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>6</td>
-                <td>0</td>
-                <td>10.1.1.1</td>
-                <td>1234</td>
-                <td>10.1.1.2</td>
-                <td>8080</td>
-                <td>2024-06-26 10:25:00</td>
-                <td>OPTIONS</td>
-                <td>/options</td>
-                <td>HTTP/1.1</td>
-                <td>Allow: GET, POST</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>7</td>
-                <td>0</td>
-                <td>172.16.1.1</td>
-                <td>4444</td>
-                <td>172.16.1.2</td>
-                <td>443</td>
-                <td>2024-06-26 10:30:00</td>
-                <td>PATCH</td>
-                <td>/patch</td>
-                <td>HTTP/2</td>
-                <td>Content-Type: application/json</td>
-                <td>{"patch":"data"}</td>
-              </tr>
-              <tr>
-                <td>8</td>
-                <td>0</td>
-                <td>192.168.3.1</td>
-                <td>5555</td>
-                <td>192.168.3.2</td>
-                <td>80</td>
-                <td>2024-06-26 10:35:00</td>
-                <td>TRACE</td>
-                <td>/trace</td>
-                <td>HTTP/1.1</td>
-                <td>Referer: http://example.com</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>9</td>
-                <td>0</td>
-                <td>10.2.2.1</td>
-                <td>6666</td>
-                <td>10.2.2.2</td>
-                <td>8080</td>
-                <td>2024-06-26 10:40:00</td>
-                <td>CONNECT</td>
-                <td>/connect</td>
-                <td>HTTP/1.1</td>
-                <td>Proxy-Authorization: Basic dXNlcjpwYXNz</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>10</td>
-                <td>0</td>
-                <td>172.16.2.1</td>
-                <td>7777</td>
-                <td>172.16.2.2</td>
-                <td>443</td>
-                <td>2024-06-26 10:45:00</td>
-                <td>GET</td>
-                <td>/status</td>
-                <td>HTTP/1.1</td>
-                <td>Accept-Encoding: gzip</td>
-                <td></td>
+              <tr v-for="(entry, index) in tableData" :key="entry.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ entry.category }}</td>
+                <td>{{ entry.source_ip }}</td>
+                <td>{{ entry.source_port }}</td>
+                <td>{{ entry.destination_ip }}</td>
+                <td>{{ entry.destination_port }}</td>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.request_method }}</td>
+                <td>{{ entry.request_uri }}</td>
+                <td>{{ entry.http_version }}</td>
+                <td>{{ entry.header_fields }}</td>
+                <td>{{ entry.request_body }}</td>
               </tr>
             </tbody>
           </table>
@@ -366,9 +232,49 @@ const formattedTime = computed(() => {
 </script>
 
 <script>
+// export default {
+//   name: "DashBoard",
+//   setup() {},
+// };
+
+import axios from "axios";
+import { mapGetters } from "vuex";
+
 export default {
   name: "DashBoard",
-  setup() {},
+  data() {
+    return {
+      tableData: [], // 表格数据
+    };
+  },
+  created() {
+    // 在组件创建时获取初始数据（如果 curDbPath 已经有值）
+    if (this.curDbPath) {
+      this.fetchTableData(this.curDbPath);
+    }
+  },
+  computed: {
+    ...mapGetters(["curDbPath"]),
+  },
+  watch: {
+    // 监听 cur_db_path 的变化
+    curDbPath(newDbPath) {
+      if (newDbPath) {
+        this.fetchTableData(newDbPath);
+      }
+    },
+  },
+  methods: {
+    // 获取选中数据库表的数据
+    async fetchTableData(database) {
+      try {
+        const response = await axios.get(`/api/db/${database}/select`);
+        this.tableData = response.data.data;
+      } catch (error) {
+        console.error("Error fetching table data:", error);
+      }
+    },
+  },
 };
 </script>
 
@@ -469,13 +375,13 @@ $total-width: 1000px;
 $column-widths: (
   30px,
   // column
-  20px,
+  30px,
   // Category
-  70px,
+  75px,
   // Source IP
   50px,
   // Source Port
-  70px,
+  75px,
   // Destination IP
   50px,
   // Destination Port
@@ -487,9 +393,9 @@ $column-widths: (
   // Request URI
   50px,
   // HTTP Version
-  300px,
+  195px,
   // Header
-  110px // Body
+  195px // Body
 );
 
 @function to-percentage($px) {
@@ -501,6 +407,26 @@ table td {
   word-wrap: break-word; /* Ensures content will wrap within the cell */
   white-space: normal; /* Allows wrapping */
   width: 100px; /* Default fixed width for each column */
+}
+
+@for $i from 1 through length($column-widths) {
+  th:nth-child(#{$i}),
+  td:nth-child(#{$i}) {
+    width: to-percentage(nth($column-widths, $i));
+  }
+}
+
+table {
+  table-layout: fixed; // Ensures table layout is fixed
+  width: 100%; // Ensures the table takes up the full width of the container
+
+  th,
+  td {
+    word-wrap: break-word; // Ensures content will wrap within the cell
+    white-space: normal; // Allows wrapping
+    overflow: hidden; // Hide overflow content
+    text-overflow: ellipsis; // Adds ellipsis for overflow content
+  }
 }
 
 @for $i from 1 through length($column-widths) {

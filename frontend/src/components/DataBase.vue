@@ -78,7 +78,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <p>The using table: {{ cur_db_path }}</p>
+          <p>The using table: {{ curDbPath }}</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-bs-dismiss="modal">
@@ -304,21 +304,27 @@
 
 <script>
 import axios from "axios";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "DataBase",
   data() {
     return {
-      cur_db_path: "",
-      newDatabaseName: "",
-      selectedDatabase: "",
-      databases: [],
+      newDatabaseName: "", // 新数据库名输入
+      selectedDatabase: "", // 选中的数据库
+      databases: [], // 数据库列表
     };
   },
   created() {
-    this.fetchDBInfo();
+    this.fetchDBInfo(); // 组件创建时获取数据库信息
+  },
+  computed: {
+    ...mapGetters(["curDbPath"]), // 从 Vuex 获取当前数据库路径
   },
   methods: {
+    ...mapActions(["updateCurDbPath"]), // 从 Vuex 引入更新数据库路径的方法
+
+    // 获取数据库信息
     async fetchDBInfo() {
       try {
         // 获取当前有哪些表
@@ -328,12 +334,14 @@ export default {
 
         // 获取当前正在使用的表名
         const response2 = await axios.get("/api/db/cur_db");
-        this.cur_db_path = response2.data.table_name;
+        this.updateCurDbPath(response2.data.table_name); // 更新 Vuex 中的 cur_db_path
         console.log("Current database:", response2.data);
       } catch (error) {
         console.error("Error fetching database info:", error);
       }
     },
+
+    // 创建新数据库
     async createDB() {
       try {
         const response = await axios.post("/api/db/create", {
@@ -350,6 +358,8 @@ export default {
         console.error("Error creating database:", error);
       }
     },
+
+    // 切换数据库
     async switchDB() {
       try {
         const response = await axios.post("/api/db/use", {
@@ -366,6 +376,8 @@ export default {
         console.error("Error switching database:", error);
       }
     },
+
+    // 清空数据库（功能待实现）
     async emptyDB() {
       try {
         // TODO: empty database
@@ -379,6 +391,8 @@ export default {
         console.error("Error emptying database:", error);
       }
     },
+
+    // 删除数据库（功能待实现）
     async deleteDB() {
       try {
         // TODO: delete database
