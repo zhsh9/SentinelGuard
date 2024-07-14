@@ -410,6 +410,91 @@ def query_records(table_name):
 
         return jsonify({'status': '200', 'data': result}), 200
     except SQLAlchemyError as e:
+        db.session.rollback()
+        # 记录并返回详细错误信息
+        error_details = str(e.__dict__.get('orig', e))
+        app.logger.error(f"SQLAlchemyError: {error_details}")
+        return jsonify({'error': error_details}), 500
+    except Exception as e:
+        # 捕获所有其他异常并记录
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# API: 根据id删除表中的记录
+@app.route('/api/db/<table_name>/delete/<id>', methods=['GET'])
+def delete(table_name, id):
+    mesg, is_done, status_code, table_name, time = set_using(table_name)
+
+    if not is_done:
+        return jsonify(mesg), status_code
+
+    # 检查输入是否符合格式
+    if not table_name or time not in tables.keys() or not tables[time]['using']:
+        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
+
+    try:
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(table_name):
+            return jsonify({'error': 'Table not found'}), 404
+        
+        # 动态加载表实例
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=db.engine)
+
+        # 检查表中id是否存在
+        with db.session() as session:
+            record = session.query(table).filter(table.c.id == id).first()
+            if not record:
+                return jsonify({'error': 'Record not found'}), 404
+
+        # 删除记录
+        with db.session() as session:
+            session.query(table).filter(table.c.id == id).delete()
+            session.commit()
+        
+        return jsonify({'status': '200', 'msg': 'Record deleted'}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        # 记录并返回详细错误信息
+        error_details = str(e.__dict__.get('orig', e))
+        app.logger.error(f"SQLAlchemyError: {error_details}")
+        return jsonify({'error': error_details}), 500
+    except Exception as e:
+        # 捕获所有其他异常并记录
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# API: 清空表中的所有记录
+@app.route('/api/db/<table_name>/clean', methods=['GET'])
+def clean_table(table_name):
+    mesg, is_done, status_code, table_name, time = set_using(table_name)
+
+    if not is_done:
+        return jsonify(mesg), status_code
+
+    # 检查输入是否符合格式
+    if not table_name or time not in tables.keys() or not tables[time]['using']:
+        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
+
+    try:
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(table_name):
+            return jsonify({'error': 'Table not found'}), 404
+        
+        # 动态加载表实例
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=db.engine)
+
+        # 删除所有记录
+        with db.session() as session:
+            session.query(table).delete()
+            session.commit()
+        
+        return jsonify({'status': '200', 'msg': 'Table cleaned'}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
         # 记录并返回详细错误信息
         error_details = str(e.__dict__.get('orig', e))
         app.logger.error(f"SQLAlchemyError: {error_details}")
