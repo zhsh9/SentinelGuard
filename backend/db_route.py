@@ -151,8 +151,9 @@ def change_using():
         if request.content_type != 'application/json':
             return jsonify({'error': 'Content-Type must be application/json'}), 415
 
-        time_str = request.json.get('table_name')
-    
+        time_str = request.json.get('table_name') # time_str: time_str: ['dynamic_http_request_log_20240701100000'] -> only select the first item
+        time_str = time_str[0] if isinstance(time_str, list) else time_str
+
     if time_str is None:
         return jsonify({'error': 'Table name is required'}), 400
 

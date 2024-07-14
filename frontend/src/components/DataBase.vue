@@ -78,7 +78,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <p>The database path: {{ cur_db_path }}</p>
+          <p>The using table: {{ cur_db_path }}</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-bs-dismiss="modal">
@@ -116,7 +116,7 @@
           <input
             type="text"
             class="form-control form-control-dark"
-            id="databaseName"
+            v-model="newDatabaseName"
             placeholder="Enter database name"
           />
         </div>
@@ -166,20 +166,15 @@
         </div>
         <div class="modal-body">
           <div>
-            <label for="exampleSelect2" class="form-label"
-              >Example multiple select</label
-            >
+            <label for="dbSelect" class="form-label">Select Database</label>
             <select
-              multiple=""
+              multiple
               class="form-select"
-              id="exampleSelect2"
+              id="dbSelect"
               style="height: 300px"
+              v-model="selectedDatabase"
             >
-              <option>db1</option>
-              <option>db2</option>
-              <option>db3</option>
-              <option>db4</option>
-              <option>db5</option>
+              <option v-for="db in databases" :key="db">{{ db }}</option>
             </select>
           </div>
         </div>
@@ -231,7 +226,7 @@
         </div>
         <div class="modal-body">
           <p class="text-danger">
-            ❗️Are you sure to empty the current dabatase?❗️
+            ❗️Are you sure to empty the current database?❗️
           </p>
         </div>
         <div class="modal-footer">
@@ -308,8 +303,96 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "DataBase",
+  data() {
+    return {
+      cur_db_path: "",
+      newDatabaseName: "",
+      selectedDatabase: "",
+      databases: [],
+    };
+  },
+  created() {
+    this.fetchDBInfo();
+  },
+  methods: {
+    async fetchDBInfo() {
+      try {
+        // 获取当前有哪些表
+        const response = await axios.get("/api/db/info");
+        this.databases = response.data.tables;
+        console.log("Database info:", response.data);
+
+        // 获取当前正在使用的表名
+        const response2 = await axios.get("/api/db/cur_db");
+        this.cur_db_path = response2.data.table_name;
+        console.log("Current database:", response2.data);
+      } catch (error) {
+        console.error("Error fetching database info:", error);
+      }
+    },
+    async createDB() {
+      try {
+        const response = await axios.post("/api/db/create", {
+          time: this.newDatabaseName,
+        });
+        console.log("Create database response:", response.data);
+        if (response.data.status === "200") {
+          alert("Database created successfully");
+          await this.fetchDBInfo(); // 更新数据库列表
+        } else {
+          alert("Error creating database");
+        }
+      } catch (error) {
+        console.error("Error creating database:", error);
+      }
+    },
+    async switchDB() {
+      try {
+        const response = await axios.post("/api/db/use", {
+          table_name: this.selectedDatabase,
+        });
+        console.log("Switch database response:", response.data);
+        if (response.data.status === "200") {
+          alert("Database switched successfully");
+          await this.fetchDBInfo(); // 更新数据库信息
+        } else {
+          alert("Error switching database");
+        }
+      } catch (error) {
+        console.error("Error switching database:", error);
+      }
+    },
+    async emptyDB() {
+      try {
+        // TODO: empty database
+        // const response = await axios.post("/api/db/empty");
+        // if (response.data.success) {
+        //   alert("Database emptied successfully");
+        // } else {
+        //   alert("Error emptying database");
+        // }
+      } catch (error) {
+        console.error("Error emptying database:", error);
+      }
+    },
+    async deleteDB() {
+      try {
+        // TODO: delete database
+        // const response = await axios.post("/api/db/delete");
+        // if (response.data.success) {
+        //   alert("Database deleted successfully");
+        // } else {
+        //   alert("Error deleting database");
+        // }
+      } catch (error) {
+        console.error("Error deleting database:", error);
+      }
+    },
+  },
 };
 </script>
 

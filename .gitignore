@@ -3,6 +3,8 @@
 
 ### SentinelGuard Customized Ignoring ###
 *.log
+.VSCodeCounter
+.VSCodeCounter/*
 
 ### Project Costomized Ignoring ###
 
