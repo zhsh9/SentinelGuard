@@ -381,12 +381,13 @@ export default {
     async emptyDB() {
       try {
         // TODO: empty database
-        // const response = await axios.post("/api/db/empty");
-        // if (response.data.success) {
-        //   alert("Database emptied successfully");
-        // } else {
-        //   alert("Error emptying database");
-        // }
+        const response = await axios.get(`/api/db/${this.curDbPath}/clean`);
+        console.log("Empty database response:", response.data);
+        if (response.data.status === "200") {
+          alert("Database emptied successfully");
+        } else {
+          alert("Error emptying database");
+        }
       } catch (error) {
         console.error("Error emptying database:", error);
       }

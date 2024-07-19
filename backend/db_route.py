@@ -2,6 +2,7 @@
 API for database operations
 - /api/db/init: 初始化数据库和环境变量
 - /api/db/create: 创建表
+- /api/db/cur_db: 获得正在使用的表
 - /api/db/use: 切换表
 - /api/db/drop: 删除表
 - /api/db/drop_all: 删除所有表
@@ -11,6 +12,7 @@ API for database operations
 - /api/db/<table_name>/select: 查询数据
 - /api/db/<table_name>/delete: 删除数据
 - /api/db/<table_name>/clean: 清空表
+- /api/db/<table_name>/drop: 删除表
 """
 import json
 from app import app, db
