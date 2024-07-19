@@ -147,22 +147,10 @@
   </div>
 </template>
 
-<script setup>
-// import "bootstrap/dist/css/bootstrap.css";
-import "bootstrap/dist/js/bootstrap.js";
-import { computed, inject } from "vue";
-
-const timerStore = inject("timerStore");
-
-const formattedTime = computed(() => {
-  const minutes = Math.floor(timerStore.time.value / 60);
-  const seconds = timerStore.time.value % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-});
-</script>
-
 <script>
+import "bootstrap/dist/js/bootstrap.js";
 import axios from "axios";
+import { computed, inject } from "vue";
 import { mapGetters } from "vuex";
 import { EventBus } from "@/eventBus";
 
@@ -187,6 +175,22 @@ const categoryMap = {
 
 export default {
   name: "DashBoard",
+  setup() {
+    // 从依赖注入中获取 timerStore
+    const timerStore = inject("timerStore");
+
+    // 计算属性：格式化时间
+    const formattedTime = computed(() => {
+      const minutes = Math.floor(timerStore.time.value / 60);
+      const seconds = timerStore.time.value % 60;
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    });
+
+    // 返回 setup 中的属性和方法
+    return {
+      formattedTime,
+    };
+  },
   data() {
     return {
       // 表格数据
