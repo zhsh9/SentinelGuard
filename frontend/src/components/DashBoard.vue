@@ -239,6 +239,7 @@ const formattedTime = computed(() => {
 
 import axios from "axios";
 import { mapGetters } from "vuex";
+import { EventBus } from "@/eventBus";
 
 export default {
   name: "DashBoard",
@@ -252,6 +253,12 @@ export default {
     if (this.curDbPath) {
       this.fetchTableData(this.curDbPath);
     }
+    // 监听事件总线的事件
+    EventBus.on("fetchTableData", this.fetchTableData);
+  },
+  beforeUnmount() {
+    // 移除事件监听器
+    EventBus.off("fetchTableData", this.fetchTableData);
   },
   computed: {
     ...mapGetters(["curDbPath"]),

@@ -64,7 +64,7 @@ class IDS:
         self.i_class = i_class
         
         # 是否使用对应的模块
-        self.whitelist_on = False
+        self.whitelist_on = True
         self.blacklist_on = True
         self.rules_on = True
         self.ai_on = True
@@ -101,25 +101,28 @@ class IDS:
 
     def detect(self, http_data):
         source_ip = http_data['source_ip']
+        ret_flag = i_class["Unclassified"]
         
         # 白名单过滤IP
         if self.whitelist_on and self.is_whitelisted(source_ip):
-            return self.i_class["Normal Packets"]
-        
+            ret_flag = self.i_class["Normal Packets"]
+
         # 黑名单过滤IP
         if self.blacklist_on and self.is_blacklisted(source_ip):
             log_malicious_traffic(http_data, self.i_class["Insecure IPs"])
-            return self.i_class["Insecure IPs"]
+            ret_flag = self.i_class["Insecure IPs"]
+            return ret_flag
 
         # 基于规则的异常检测 TODO
         if self.rules_on and match_rules(http_data, self.rules):
             log_malicious_traffic(http_data, self.i_class["CVEs"])
-            return self.i_class["CVEs"]
+            ret_flag = self.i_class["CVEs"]
+            return ret_flag
 
         # 基于 AI-MODEL 的异常检测 TODO
         # url = http_data['request_uri']
 
-        return self.i_class["Unclassified"]
+        return ret_flag
 
 
 # 初始化 IDS 实例

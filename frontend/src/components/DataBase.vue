@@ -305,6 +305,7 @@
 <script>
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
+import { EventBus } from "@/eventBus";
 
 export default {
   name: "DataBase",
@@ -386,7 +387,9 @@ export default {
         if (response.data.status === "200") {
           alert("Database emptied successfully");
           // 刷新页面
-          window.location.reload();
+          // window.location.reload();
+          // 触发数据重新加载事件
+          EventBus.emit("fetchTableData", this.curDbPath);
         } else {
           alert("Error emptying database");
         }
