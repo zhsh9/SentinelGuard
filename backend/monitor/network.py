@@ -64,14 +64,17 @@ def extract_http_data(packet, payload):
             'request_uri': extract_request_uri(headers),
             'http_version': extract_http_version(headers),
             'header_fields': json.dumps(extract_header_fields(headers), ensure_ascii=False),
-            'request_body': json.dumps(filter_non_printable(body), ensure_ascii=False)
+            'request_body': filter_non_printable(body)  # 直接传递处理后的 body
+            # 'request_body': json.dumps(filter_non_printable(body), ensure_ascii=False)
         }
-        return http_data
+        if http_data['request_method'] != 'Response': # 响应报文不收集，也可以收集
+            return http_data
     return None
 
 def extract_request_method(headers):
     match = re.match(r"^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|TRACE|CONNECT)", headers)
-    return match.group(0) if match else 'UNKNOWN'
+    # return match.group(0) if match else 'UNKNOWN'
+    return match.group(0) if match else 'Response' # 如果上面的请求方法都不是，就是响应报文
 
 def extract_request_uri(headers):
     parts = headers.split()

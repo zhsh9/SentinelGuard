@@ -62,6 +62,12 @@ class IDS:
         self.blacklist = blacklist
         self.rules = rules
         self.i_class = i_class
+        
+        # 是否使用对应的模块
+        self.whitelist_on = False
+        self.blacklist_on = True
+        self.rules_on = True
+        self.ai_on = True
 
     def is_whitelisted(self, ip):
         # 检查 IP 是否在白名单中，支持正则表达式，支持子网格式
@@ -97,16 +103,16 @@ class IDS:
         source_ip = http_data['source_ip']
         
         # 白名单过滤IP
-        if self.is_whitelisted(source_ip):
+        if self.whitelist_on and self.is_whitelisted(source_ip):
             return self.i_class["Normal Packets"]
         
         # 黑名单过滤IP
-        if self.is_blacklisted(source_ip):
+        if self.blacklist_on and self.is_blacklisted(source_ip):
             log_malicious_traffic(http_data, self.i_class["Insecure IPs"])
             return self.i_class["Insecure IPs"]
 
         # 基于规则的异常检测 TODO
-        if match_rules(http_data, self.rules):
+        if self.rules_on and match_rules(http_data, self.rules):
             log_malicious_traffic(http_data, self.i_class["CVEs"])
             return self.i_class["CVEs"]
 

@@ -385,6 +385,8 @@ export default {
         console.log("Empty database response:", response.data);
         if (response.data.status === "200") {
           alert("Database emptied successfully");
+          // 刷新页面
+          window.location.reload();
         } else {
           alert("Error emptying database");
         }
