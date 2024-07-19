@@ -31,13 +31,17 @@
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Total Number of Packets
-              <span class="badge bg-primary rounded-pill">1420</span>
+              <span class="badge bg-primary rounded-pill">{{
+                totalPackets
+              }}</span>
             </li>
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Total Number of Threats
-              <span class="badge bg-primary rounded-pill">32</span>
+              <span class="badge bg-primary rounded-pill">{{
+                totalThreats
+              }}</span>
             </li>
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
@@ -46,7 +50,8 @@
               <span
                 id="categories-selected"
                 class="badge bg-primary rounded-pill"
-                >0</span
+                >{{ selectedCategories.length }} /
+                {{ configedCategories }}</span
               >
             </li>
             <li
@@ -65,88 +70,13 @@
         <div id="threat-cate">
           <ul class="list-group">
             <li
-              class="list-group-item list-group-item-primary d-flex justify-content-between align-items-center"
+              v-for="(count, category) in categoryCounts"
+              :key="category"
+              :class="getCategoryClass(category)"
+              @click="toggleCategorySelection(category)"
             >
-              Normal Packets
-              <span class="badge bg-primary rounded-pill">14</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center"
-            >
-              Insecure IPs
-              <span class="badge bg-primary rounded-pill">2</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center"
-            >
-              Insecure Referers
-              <span class="badge bg-primary rounded-pill">2</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center"
-            >
-              CVEs
-              <span class="badge bg-primary rounded-pill">2</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              Brute Force
-              <span class="badge bg-primary rounded-pill">1</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              Command Injection
-              <span class="badge bg-primary rounded-pill">5</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              CSRF
-              <span class="badge bg-primary rounded-pill">4</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              File Inclusion
-              <span class="badge bg-primary rounded-pill">9</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              File Upload
-              <span class="badge bg-primary rounded-pill">8</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              Insecure CAPTCHA
-              <span class="badge bg-primary rounded-pill">0</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              SQL Injection
-              <span class="badge bg-primary rounded-pill">0</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              SQL Injection (Blind)
-              <span class="badge bg-primary rounded-pill">0</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              XSS (Reflected)
-              <span class="badge bg-primary rounded-pill">0</span>
-            </li>
-            <li
-              class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center"
-            >
-              XSS (Stored)
-              <span class="badge bg-primary rounded-pill">0</span>
+              {{ category }}
+              <span class="badge bg-primary rounded-pill">{{ count }}</span>
             </li>
           </ul>
         </div>
@@ -195,7 +125,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(entry, index) in tableData" :key="entry.id">
+              <tr v-for="(entry, index) in filteredTableData" :key="entry.id">
                 <td>{{ index + 1 }}</td>
                 <td>{{ entry.category }}</td>
                 <td>{{ entry.source_ip }}</td>
@@ -232,20 +162,56 @@ const formattedTime = computed(() => {
 </script>
 
 <script>
-// export default {
-//   name: "DashBoard",
-//   setup() {},
-// };
-
 import axios from "axios";
 import { mapGetters } from "vuex";
 import { EventBus } from "@/eventBus";
+
+// 类别映射
+const categoryMap = {
+  "-1": "Unclassified",
+  0: "Normal Packets",
+  1: "Insecure IPs",
+  2: "Insecure Referers",
+  3: "CVEs",
+  4: "Brute Force",
+  5: "Command Injection",
+  6: "CSRF",
+  7: "File Inclusion",
+  8: "File Upload",
+  9: "Insecure CAPTCHA",
+  10: "SQL Injection",
+  11: "SQL Injection (Blind)",
+  12: "XSS (Reflected)",
+  13: "XSS (Stored)",
+};
 
 export default {
   name: "DashBoard",
   data() {
     return {
-      tableData: [], // 表格数据
+      // 表格数据
+      tableData: [],
+      // 统计数据
+      totalPackets: 0,
+      totalThreats: 0,
+      selectedCategories: [], // 存储选中的类别数组
+      configedCategories: 0,
+      categoryCounts: {
+        "Normal Packets": 0,
+        "Insecure IPs": 0,
+        "Insecure Referers": 0,
+        CVEs: 0,
+        "Brute Force": 0,
+        "Command Injection": 0,
+        CSRF: 0,
+        "File Inclusion": 0,
+        "File Upload": 0,
+        "Insecure CAPTCHA": 0,
+        "SQL Injection": 0,
+        "SQL Injection (Blind)": 0,
+        "XSS (Reflected)": 0,
+        "XSS (Stored)": 0,
+      },
     };
   },
   created() {
@@ -262,6 +228,15 @@ export default {
   },
   computed: {
     ...mapGetters(["curDbPath"]),
+    filteredTableData() {
+      // console.log("selectedCategories:", this.selectedCategories);
+      if (this.selectedCategories.length === 0) {
+        return this.tableData;
+      }
+      return this.tableData.filter((entry) =>
+        this.selectedCategories.includes(categoryMap[entry.category])
+      );
+    },
   },
   watch: {
     // 监听 cur_db_path 的变化
@@ -277,9 +252,70 @@ export default {
       try {
         const response = await axios.get(`/api/db/${database}/select`);
         this.tableData = response.data.data;
+        // console.log("tableData", this.tableData);
+        this.updateCategoryCounts();
       } catch (error) {
         console.error("Error fetching table data:", error);
       }
+    },
+    updateCategoryCounts() {
+      // Reset counts
+      this.totalPackets = this.tableData.length;
+      this.totalThreats = 0;
+      this.configedCategories = Object.keys(this.categoryCounts).length;
+      for (const category in this.categoryCounts) {
+        this.categoryCounts[category] = 0;
+      }
+
+      // Update counts based on tableData
+      this.tableData.forEach((item) => {
+        const category = categoryMap[item.category];
+        if (
+          category &&
+          Object.prototype.hasOwnProperty.call(this.categoryCounts, category)
+        ) {
+          this.categoryCounts[category]++;
+          if (category !== "Normal Packets") {
+            this.totalThreats++;
+          }
+        }
+      });
+    },
+    toggleCategorySelection(category) {
+      const index = this.selectedCategories.indexOf(category);
+      if (index > -1) {
+        this.selectedCategories.splice(index, 1);
+      } else {
+        this.selectedCategories.push(category);
+      }
+    },
+    getCategoryClass(category) {
+      const warningCategories = ["Insecure IPs", "Insecure Referers", "CVEs"];
+      const dangerCategories = [
+        "Brute Force",
+        "Command Injection",
+        "CSRF",
+        "File Inclusion",
+        "File Upload",
+        "Insecure CAPTCHA",
+        "SQL Injection",
+        "SQL Injection (Blind)",
+        "XSS (Reflected)",
+        "XSS (Stored)",
+      ];
+      let className =
+        "list-group-item d-flex justify-content-between align-items-center";
+      if (warningCategories.includes(category)) {
+        className += " list-group-item-warning";
+      } else if (dangerCategories.includes(category)) {
+        className += " list-group-item-danger";
+      } else {
+        className += " list-group-item-primary";
+      }
+      if (this.selectedCategories.includes(category)) {
+        className += " active";
+      }
+      return className;
     },
   },
 };
@@ -379,30 +415,20 @@ hr.fancy-line {
 // Main: Table View
 $total-width: 1000px;
 
+// column, Category, Source IP, Source Port, Destination IP, Destination Port, Time, Request Method, Request URI, HTTP Version, Header, Body
 $column-widths: (
   30px,
-  // column
   30px,
-  // Category
   75px,
-  // Source IP
   50px,
-  // Source Port
   75px,
-  // Destination IP
   50px,
-  // Destination Port
   110px,
-  // Time
   50px,
-  // Request Method
   90px,
-  // Request URI
   50px,
-  // HTTP Version
   195px,
-  // Header
-  195px // Body
+  195px
 );
 
 @function to-percentage($px) {
