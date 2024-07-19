@@ -1,0 +1,5 @@
+[
+    "http://malicious.example.com",
+    "http://badreferer.example.com",
+    "http://phishing.example.com"
+]

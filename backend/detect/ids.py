@@ -33,14 +33,16 @@ def load_json(file_path):
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # 构建绝对路径
-whitelist_path = os.path.join(current_dir, 'ip_whitelist.json')
-blacklist_path = os.path.join(current_dir, 'ip_blacklist.json')
+ip_whitelist_path = os.path.join(current_dir, 'ip_whitelist.json')
+ip_blacklist_path = os.path.join(current_dir, 'ip_blacklist.json')
+referer_blacklist_path = os.path.join(current_dir, 'referer_blacklist.json')
 rules_path = os.path.join(current_dir, 'rules.json')
 i_class_path = os.path.join(current_dir, CONFIG_FILE_PATH)
 
 # 加载 JSON 文件
-whitelist = set(load_json(whitelist_path))
-blacklist = set(load_json(blacklist_path))
+ip_whitelist = set(load_json(ip_whitelist_path))
+ip_blacklist = set(load_json(ip_blacklist_path))
+referer_blacklist = set(load_json(referer_blacklist_path))
 rules = load_json(rules_path)
 i_class = load_json(i_class_path)
 
@@ -57,25 +59,27 @@ def log_malicious_traffic(http_data, category):
         log_file.write(json.dumps(http_data) + '\n')
 
 class IDS:
-    def __init__(self, whitelist, blacklist, rules, i_class):
-        self.whitelist = whitelist
-        self.blacklist = blacklist
+    def __init__(self, ip_whitelist, ip_blacklist, referer_blacklist, rules, i_class):
+        self.ip_whitelist = ip_whitelist
+        self.ip_blacklist = ip_blacklist
+        self.referer_blacklist = referer_blacklist
         self.rules = rules
         self.i_class = i_class
         
         # 是否使用对应的模块
-        self.whitelist_on = True
-        self.blacklist_on = True
+        self.ip_whitelist_on = True
+        self.ip_blacklist_on = True
+        self.referer_blacklist_on = True
         self.rules_on = True
         self.ai_on = True
 
     def is_whitelisted(self, ip):
         # 检查 IP 是否在白名单中，支持正则表达式，支持子网格式
-        return self._match_ip(ip, self.whitelist)
+        return self._match_ip(ip, self.ip_whitelist)
 
     def is_blacklisted(self, ip):
         # 检查 IP 是否在黑名单中，支持正则表达式，支持子网格式
-        return self._match_ip(ip, self.blacklist)
+        return self._match_ip(ip, self.ip_blacklist)
 
     def _match_ip(self, ip, ip_list):
         for pattern in ip_list:
@@ -104,13 +108,23 @@ class IDS:
         ret_flag = i_class["Unclassified"]
         
         # 白名单过滤IP
-        if self.whitelist_on and self.is_whitelisted(source_ip):
+        if self.ip_whitelist_on and self.is_whitelisted(source_ip):
             ret_flag = self.i_class["Normal Packets"]
 
         # 黑名单过滤IP
-        if self.blacklist_on and self.is_blacklisted(source_ip):
+        if self.ip_blacklist_on and self.is_blacklisted(source_ip):
             log_malicious_traffic(http_data, self.i_class["Insecure IPs"])
             ret_flag = self.i_class["Insecure IPs"]
+            return ret_flag
+        
+        # 黑名单过滤Referer
+        # 先把 http_data['header_fields'] = json.dumps(extract_header_fields(headers), ensure_ascii=False) 转换为 dict
+        # 然后判断是否有 Referer 字段，如果有，则判断 Referer 是否在黑名单中
+        header_fields = json.loads(http_data['header_fields'])
+        referer = header_fields.get('Referer')
+        if self.referer_blacklist_on and referer in self.referer_blacklist:
+            log_malicious_traffic(http_data, self.i_class["Insecure Referers"])
+            ret_flag = self.i_class["Insecure Referers"]
             return ret_flag
 
         # 基于规则的异常检测 TODO
@@ -126,7 +140,7 @@ class IDS:
 
 
 # 初始化 IDS 实例
-ids_system = IDS(whitelist, blacklist, rules, i_class)
+ids_system = IDS(ip_whitelist, ip_blacklist, referer_blacklist, rules, i_class)
 
 
 if __name__ == '__main__':
@@ -141,10 +155,11 @@ if __name__ == '__main__':
         'request_method': 'GET',
         'request_uri': '/index.html',
         'http_version': 'HTTP/1.1',
-        'header_fields': json.dumps({'User-Agent': 'Mozilla/5.0'}, ensure_ascii=False),
+        'header_fields': json.dumps({'User-Agent': 'Mozilla/5.0', 'Referer': 'http://phishing.example.com'}, ensure_ascii=False),
         'request_body': json.dumps({}, ensure_ascii=False)
     }
     
     # 调用 IDS 检测函数
     result = ids_system.detect(http_data)
+    print(http_data)
     print(result)
