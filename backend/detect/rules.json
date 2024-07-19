@@ -1,9 +1,11 @@
 [
     {
+        "rule_name": "NO POST TO ADMIN",
         "request_method": "POST",
         "request_uri": "/admin"
     },
     {
+        "rule_name": "Bad User Agent",
         "request_method": "GET",
         "request_uri": "/login",
         "header_fields": "{\"User-Agent\": \"MaliciousBot\"}"

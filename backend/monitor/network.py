@@ -93,9 +93,10 @@ def extract_header_fields(headers):
 def filter_non_printable(text):
     return ''.join([c if c.isprintable() else '.' for c in text])
 
-def start_sniffing(interface='en0'):
+def start_sniffing(interface='eth0'):
     print(f"Starting sniffing on interface: {interface}")
-    sniff(iface=interface, filter="tcp port 80", prn=process_packet, store=0)
+    # sniff(iface=interface, filter="tcp port 80", prn=process_packet, store=0)
+    sniff(iface=interface, filter="tcp", prn=process_packet, store=0)
 
 if __name__ == '__main__':
-    start_sniffing()
+    start_sniffing('eth0')

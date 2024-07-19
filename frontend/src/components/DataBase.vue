@@ -377,7 +377,7 @@ export default {
       }
     },
 
-    // 清空数据库（功能待实现）
+    // 清空数据库
     async emptyDB() {
       try {
         // TODO: empty database

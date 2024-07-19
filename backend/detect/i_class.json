@@ -1,17 +1,1 @@
-{
-    "Unclassified": -1,
-    "Normal Packets": 0,
-    "Insecure IPs": 1,
-    "Insecure Referers": 2,
-    "CVEs": 3,
-    "Brute Force": 4,
-    "Command Injection": 5,
-    "CSRF": 6,
-    "File Inclusion": 7,
-    "File Upload": 8,
-    "Insecure CAPTCHA": 9,
-    "SQL Injection": 10,
-    "SQL Injection (Blind)": 11,
-    "XSS (Reflected)": 12,
-    "XSS (Stored)": 13
-}
+../../i_class.json

@@ -19,6 +19,8 @@ http_data = {
 import os
 import json
 from datetime import datetime
+import re
+import ipaddress
 
 CONFIG_FILE_PATH = 'i_class.json'
 
@@ -62,12 +64,34 @@ class IDS:
         self.i_class = i_class
 
     def is_whitelisted(self, ip):
-        # 检查 IP 是否在白名单中
-        return ip in self.whitelist
+        # 检查 IP 是否在白名单中，支持正则表达式，支持子网格式
+        return self._match_ip(ip, self.whitelist)
 
     def is_blacklisted(self, ip):
-        # 检查 IP 是否在黑名单中
-        return ip in self.blacklist
+        # 检查 IP 是否在黑名单中，支持正则表达式，支持子网格式
+        return self._match_ip(ip, self.blacklist)
+
+    def _match_ip(self, ip, ip_list):
+        for pattern in ip_list:
+            if self._ip_matches_pattern(ip, pattern):
+                return True
+        return False
+
+    def _ip_matches_pattern(self, ip, pattern):
+        # 支持子网掩码格式
+        if '/' in pattern:
+            try:
+                network = ipaddress.ip_network(pattern, strict=False)
+                if ipaddress.ip_address(ip) in network:
+                    return True
+            except ValueError:
+                return False
+        # 支持正则表达式
+        else:
+            regex_pattern = pattern.replace('*', '.*')
+            if re.match(f'^{regex_pattern}$', ip):
+                return True
+        return False
 
     def detect(self, http_data):
         source_ip = http_data['source_ip']
