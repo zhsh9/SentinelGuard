@@ -64,8 +64,9 @@ def extract_http_data(packet, payload):
             'request_uri': extract_request_uri(headers),
             'http_version': extract_http_version(headers),
             'header_fields': json.dumps(extract_header_fields(headers), ensure_ascii=False),
-            'request_body': filter_non_printable(body)  # 直接传递处理后的 body
+            'request_body': filter_non_printable(body),  # 直接传递处理后的 body
             # 'request_body': json.dumps(filter_non_printable(body), ensure_ascii=False)
+            'raw_package': bytes(packet)  # 存储原始数据包字节数据
         }
         if http_data['request_method'] != 'Response': # 响应报文不收集，也可以收集
             return http_data

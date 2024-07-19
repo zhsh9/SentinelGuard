@@ -16,7 +16,7 @@ Model Design: DDL (Data Definition Language)
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, LargeBinary
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from datetime import datetime
 from app import app, db
@@ -43,6 +43,7 @@ class ModelGenerator(CustomModelMeta):
         dct['http_version'] = Column(String(16), nullable=False)
         dct['header_fields'] = Column(Text, nullable=False)  # JSON string
         dct['request_body'] = Column(Text, nullable=True)  # JSON string, for POST requests only
+        dct['raw_packet'] = Column(LargeBinary, nullable=False)  # Binary data for the raw packet
 
         def __repr__(self):
             return (f'<{name} {self.source_ip}:{self.source_port} -> '
@@ -76,11 +77,12 @@ def create_dynamic_http_request_log_class(ds: str):
         'http_version': Column(String(16), nullable=False),
         'header_fields': Column(Text, nullable=False),  # JSON string
         'request_body': Column(Text, nullable=True),  # JSON string, for POST requests only,
+        'raw_packet': Column(LargeBinary, nullable=False),  # Binary data for the raw packet
         '__repr__': lambda self: (
             f'<HttpRequestLog {self.source_ip}:{self.source_port} -> '
             f'{self.destination_ip}:{self.destination_port}: '
             f'{self.time} - {self.request_method} - {self.request_uri}>'
-        )
+        ),
     }
 
     # 使用 type 创建类
