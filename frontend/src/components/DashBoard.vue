@@ -334,18 +334,15 @@ export default {
 
 // make sidebar sticky and scroolable
 .sidebar {
-  position: -webkit-sticky;
-  position: sticky;
-  // top: 48px;
-  // height: calc(100vh - 48px);
+  position: -webkit-fixed;
+  position: fixed;
   overflow-y: auto;
 }
 
 @media (min-width: 768px) {
   .sidebar .offcanvas-lg {
-    position: -webkit-sticky;
-    position: sticky;
-    // top: 48px;
+    position: -webkit-fixed;
+    position: fixed;
   }
 }
 
