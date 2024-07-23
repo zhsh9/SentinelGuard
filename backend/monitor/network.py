@@ -3,11 +3,13 @@ import requests
 import json
 import re
 from datetime import datetime
+from multiprocessing import Event
 
 # 将项目根目录添加到 sys.path
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from backend.detect.ids import *
+from app import app
 
 
 HOST_URL = 'http://localhost:8001/'
@@ -48,7 +50,7 @@ def process_packet(packet):
             # 把检测完毕的数据插入数据库
             response = insert_http_data(http_data)
             if response:
-                print(response.json())
+                print('[+] Insert success.', response.json())
 
 def extract_http_data(packet, payload):
     if "HTTP" in payload:
@@ -97,10 +99,14 @@ def extract_header_fields(headers):
 def filter_non_printable(text):
     return ''.join([c if c.isprintable() else '.' for c in text])
 
-def start_sniffing(interface='eth0'):
+def start_sniffing(interface: str, stop_event: Event): # type: ignore
     print(f"Starting sniffing on interface: {interface}")
     # sniff(iface=interface, filter="tcp port 80", prn=process_packet, store=0)
-    sniff(iface=interface, filter="tcp", prn=process_packet, store=0)
+    # sniff(iface=interface, filter="tcp", prn=process_packet, store=0)
+    def stop_filter(_):
+        return stop_event.is_set()
+    
+    sniff(iface=interface, filter="tcp", prn=process_packet, stop_filter=stop_filter, store=0)
 
 if __name__ == '__main__':
     start_sniffing('eth0')
