@@ -121,7 +121,9 @@
 import { ref, onMounted, inject } from "vue";
 import { Modal } from "bootstrap";
 import axios from "axios";
+import { useStore } from "vuex"; // 导入 Vuex
 
+const store = useStore(); // 使用 Vuex
 const timerStore = inject("timerStore");
 const isSniffing = ref(false);
 
@@ -129,6 +131,7 @@ const fetchStatus = async () => {
   try {
     const response = await axios.get("/api/sniffer/status");
     isSniffing.value = response.data.sniffing;
+    store.dispatch("updateIsSniffing", isSniffing.value);
   } catch (error) {
     console.error("Error fetching sniffer status:", error);
   }
@@ -141,6 +144,8 @@ const startCapture = async () => {
     });
     if (response.data.status === "success") {
       isSniffing.value = true;
+      store.dispatch("updateIsSniffing", isSniffing.value);
+      timerStore.startNewTimer();
       timerStore.startTimer();
     }
     alert(response.data.message);
@@ -155,20 +160,26 @@ const stopCapture = async () => {
     const response = await axios.post("/api/sniffer/stop");
     if (response.data.status === "success") {
       isSniffing.value = false;
+      store.dispatch("updateIsSniffing", isSniffing.value);
       timerStore.stopTimer();
     }
     alert(response.data.message);
     hideModal("stopCaptureModal");
   } catch (error) {
     console.error("Error stopping sniffer:", error);
+    alert("Sniffer is not running");
   }
 };
 
 const hideModal = (modalId) => {
   const modalElement = document.getElementById(modalId);
-  const modalInstance =
-    Modal.getInstance(modalElement) || new Modal(modalElement);
-  modalInstance.hide();
+  if (modalElement) {
+    const modalInstance =
+      Modal.getInstance(modalElement) || new Modal(modalElement);
+    modalInstance.hide();
+  } else {
+    console.error(`Modal element with id ${modalId} not found`);
+  }
 };
 
 onMounted(() => {
