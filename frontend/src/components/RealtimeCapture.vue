@@ -49,8 +49,11 @@
           ></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you really want to start capturing http traffic?</p>
-          <p>Other info: db_name, username, time, ...</p>
+          <p>Are you sure to start capturing http traffic?</p>
+          <p>
+            Current status: <span v-if="isSniffing">Sniffing</span
+            ><span v-else>Not Sniffing</span>
+          </p>
         </div>
         <div class="modal-footer">
           <button
@@ -91,7 +94,11 @@
           ></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you really want to stop capturing http traffic?</p>
+          <p>Are you sure to stop capturing http traffic?</p>
+          <p>
+            Current status: <span v-if="isSniffing">Sniffing</span
+            ><span v-else>Not Sniffing</span>
+          </p>
         </div>
         <div class="modal-footer">
           <button
@@ -111,32 +118,62 @@
 </template>
 
 <script setup>
-// 在 Vue 组件文件的顶部导入 Bootstrap 的 JavaScript
-// import "bootstrap/dist/js/bootstrap.bundle.min";
+import { ref, onMounted, inject } from "vue";
 import { Modal } from "bootstrap";
-import { inject } from "vue";
+import axios from "axios";
 
 const timerStore = inject("timerStore");
+const isSniffing = ref(false);
 
-const startCapture = () => {
-  timerStore.startTimer();
-  const startCaptureModal = document.getElementById("startCaptureModal");
-  const modalInstance = Modal.getInstance(startCaptureModal);
+const fetchStatus = async () => {
+  try {
+    const response = await axios.get("/api/sniffer/status");
+    isSniffing.value = response.data.sniffing;
+  } catch (error) {
+    console.error("Error fetching sniffer status:", error);
+  }
+};
+
+const startCapture = async () => {
+  try {
+    const response = await axios.post("/api/sniffer/start", {
+      interface: "en0",
+    });
+    if (response.data.status === "success") {
+      isSniffing.value = true;
+      timerStore.startTimer();
+    }
+    alert(response.data.message);
+    hideModal("startCaptureModal");
+  } catch (error) {
+    console.error("Error starting sniffer:", error);
+  }
+};
+
+const stopCapture = async () => {
+  try {
+    const response = await axios.post("/api/sniffer/stop");
+    if (response.data.status === "success") {
+      isSniffing.value = false;
+      timerStore.stopTimer();
+    }
+    alert(response.data.message);
+    hideModal("stopCaptureModal");
+  } catch (error) {
+    console.error("Error stopping sniffer:", error);
+  }
+};
+
+const hideModal = (modalId) => {
+  const modalElement = document.getElementById(modalId);
+  const modalInstance =
+    Modal.getInstance(modalElement) || new Modal(modalElement);
   modalInstance.hide();
 };
 
-const stopCapture = () => {
-  timerStore.stopTimer();
-  const stopCaptureModal = document.getElementById("stopCaptureModal");
-  const modalInstance = Modal.getInstance(stopCaptureModal);
-  modalInstance.hide();
-};
-</script>
-
-<script>
-export default {
-  name: "UploadPcap",
-};
+onMounted(() => {
+  fetchStatus();
+});
 </script>
 
 <style lang="scss" scoped>
