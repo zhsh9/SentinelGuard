@@ -216,6 +216,7 @@ export default {
         "XSS (Reflected)": 0,
         "XSS (Stored)": 0,
       },
+      intervalId: null, // 定时器 ID
     };
   },
   created() {
@@ -233,7 +234,7 @@ export default {
     EventBus.off("fetchTableData", this.fetchTableData);
   },
   computed: {
-    ...mapGetters(["curDbPath"]),
+    ...mapGetters(["curDbPath", "isSniffing"]),
     filteredTableData() {
       // console.log("selectedCategories:", this.selectedCategories);
       if (this.selectedCategories.length === 0) {
@@ -251,11 +252,22 @@ export default {
         this.fetchTableData(newDbPath);
       }
     },
+    // 监听 isSniffing 状态的变化
+    isSniffing(newVal) {
+      if (newVal) {
+        this.startFetchingData();
+      } else {
+        this.stopFetchingData();
+      }
+    },
   },
   methods: {
     // 获取选中数据库表的数据
     async fetchTableData(database) {
       try {
+        if (!database) {
+          database = this.curDbPath;
+        }
         const response = await axios.get(`/api/db/${database}/select`);
         this.tableData = response.data.data;
         // console.log("tableData", this.tableData);
@@ -263,6 +275,15 @@ export default {
       } catch (error) {
         console.error("Error fetching table data:", error);
       }
+    },
+    // 开始定时获取数据
+    startFetchingData() {
+      this.intervalId = setInterval(this.fetchTableData, 1000);
+    },
+    // 停止定时获取数据
+    stopFetchingData() {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
     },
     updateCategoryCounts() {
       // Reset counts
@@ -321,6 +342,16 @@ export default {
         className += " active";
       }
       return className;
+    },
+    mounted() {
+      // 初始加载时检查 isSniffing 状态
+      if (this.isSniffing) {
+        this.startFetchingData();
+      }
+    },
+    beforeUnmount() {
+      // 在组件销毁时清除定时器
+      this.stopFetchingData();
     },
   },
 };

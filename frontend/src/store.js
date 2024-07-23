@@ -6,7 +6,7 @@ export const store = createStore({
     return {
       token: localStorage.getItem("token") || "", // 初始化时从 localStorage 加载 token
       dbName: localStorage.getItem("dbName") || "", // 初始化时从 localStorage 加载 dbName
-      cur_db_path: "", // 初始化 cur_db_path
+      curDbPath: "", // 初始化 curDbPath
       isSniffing: false, // 初始化 isSniffing 状态
     };
   },
@@ -28,10 +28,10 @@ export const store = createStore({
       localStorage.removeItem("dbName"); // 清除 localStorage 中的 dbName
     },
     setCurDbPath(state, path) {
-      state.cur_db_path = path; // 更新 cur_db_path
+      state.curDbPath = path; // 更新 curDbPath
     },
     clearCurDbPath(state) {
-      state.cur_db_path = ""; // 清除 cur_db_path
+      state.curDbPath = ""; // 清除 curDbPath
     },
     setIsSniffing(state, value) {
       state.isSniffing = value; // 更新 isSniffing 状态
@@ -55,7 +55,7 @@ export const store = createStore({
     },
   },
   getters: {
-    curDbPath: (state) => state.cur_db_path,
+    curDbPath: (state) => state.curDbPath,
     token: (state) => state.token,
     dbName: (state) => state.dbName,
     isSniffing: (state) => state.isSniffing,
