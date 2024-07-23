@@ -199,7 +199,7 @@ export default {
       totalPackets: 0,
       totalThreats: 0,
       selectedCategories: [], // 存储选中的类别数组
-      configedCategories: 0,
+      configedCategories: 0, // 配置的攻击类别数
       categoryCounts: {
         "Normal Packets": 0,
         "Insecure IPs": 0,
@@ -225,6 +225,8 @@ export default {
     }
     // 监听事件总线的事件
     EventBus.on("fetchTableData", this.fetchTableData);
+    // 计算有多少种类的攻击
+    this.configedCategories = Object.keys(this.categoryCounts).length;
   },
   beforeUnmount() {
     // 移除事件监听器
@@ -266,7 +268,6 @@ export default {
       // Reset counts
       this.totalPackets = this.tableData.length;
       this.totalThreats = 0;
-      this.configedCategories = Object.keys(this.categoryCounts).length;
       for (const category in this.categoryCounts) {
         this.categoryCounts[category] = 0;
       }
