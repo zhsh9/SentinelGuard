@@ -55,6 +55,10 @@ class Config:
     
     TABLES = {}
     USING_TABLE = ''
+    
+    # ------------------------------- Data Collection -------------------------------
+    IS_SNIFFING = None
+    SNIFFING_PROCESS = None
 
 
 # Test Config Class
