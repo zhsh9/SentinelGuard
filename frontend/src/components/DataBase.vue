@@ -350,13 +350,18 @@ export default {
         });
         console.log("Create database response:", response.data);
         if (response.data.status === "200") {
-          alert("Database created successfully");
+          alert(response.data.message);
           await this.fetchDBInfo(); // 更新数据库列表
-        } else {
-          alert("Error creating database");
         }
       } catch (error) {
         console.error("Error creating database:", error);
+        if (error.response && error.response.status === 400) {
+          // 提取并显示错误信息
+          const errorMessage = error.response.data.error;
+          alert(`Error: ${errorMessage}`);
+        } else {
+          alert("An unexpected error occurred");
+        }
       }
     },
 
