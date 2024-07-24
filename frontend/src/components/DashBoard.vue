@@ -142,9 +142,12 @@
             </svg>
             <!-- Buttons -->
             <div class="btn-group me-2">
+              <!-- Share button -->
               <button
                 type="button"
                 class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                data-bs-toggle="modal"
+                data-bs-target="#share-modal"
                 @click="shareUrl"
               >
                 <svg class="bi">
@@ -152,15 +155,35 @@
                 </svg>
                 Share
               </button>
+              <!-- Export button -->
               <button
                 type="button"
                 class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
+                id="btnGroupDrop_Export"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="true"
               >
                 <svg class="bi">
                   <use xlink:href="#export"></use>
                 </svg>
                 Export
               </button>
+              <!-- Export drop-down -->
+              <div
+                class="dropdown-menu hidden"
+                aria-labelledby="btnGroupDrop_Export"
+                style="
+                  position: absolute;
+                  inset: 0px auto auto 0px;
+                  margin: 0px;
+                  transform: translate3d(0px, 40px, 0px);
+                "
+                data-popper-placement="bottom-start"
+              >
+                <a class="dropdown-item" href="#">CSV</a>
+                <a class="dropdown-item" href="#">PCAP</a>
+              </div>
             </div>
             <button
               type="button"
@@ -171,6 +194,33 @@
               </svg>
               This week
             </button>
+          </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div class="modal fade" id="share-modal">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">
+                  <svg class="bi">
+                    <use xlink:href="#share"></use>
+                  </svg>
+                  Share
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                >
+                  <span aria-hidden="true"></span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>URL copied to clipboard.</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -216,6 +266,7 @@
 </template>
 
 <script>
+import "bootstrap/dist/js/bootstrap.js";
 import axios from "axios";
 import { computed, inject } from "vue";
 import { mapGetters } from "vuex";
@@ -638,5 +689,9 @@ tbody tr {
 /* No margin for quote */
 #info > figure > figcaption {
   margin-bottom: 0;
+}
+ww .dropdown-menu {
+  width: 100px !important;
+  min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
 }
 </style>
