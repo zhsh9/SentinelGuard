@@ -237,10 +237,18 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(entry, index) in filteredTableData" :key="entry.id">
+              <tr
+                v-for="entry in filteredTableData"
+                :key="entry.id"
+                data-bs-toggle="offcanvas"
+                href="#recordOffcanvas"
+                role="button"
+                aria-controls="recordOffcanvas"
+                @click="setCurrentEntry(entry)"
+              >
                 <td>
                   <span :class="getCategoryEntryClass(entry.category)">
-                    {{ index + 1 }}
+                    {{ entry.id }}
                   </span>
                 </td>
                 <td>
@@ -261,6 +269,51 @@
               </tr>
             </tbody>
           </table>
+          <!-- offcanvas for record update -->
+          <div
+            class="offcanvas offcanvas-end offcanvas-custom"
+            data-bs-scroll="true"
+            tabindex="-1"
+            id="recordOffcanvas"
+            aria-labelledby="recordOffcanvasLabel"
+            data-bs-backdrop="false"
+          >
+            <div class="offcanvas-header">
+              <h5 class="offcanvas-title" id="recordOffcanvasLabel">
+                Record Details
+              </h5>
+              <button
+                type="button"
+                class="btn-close text-reset"
+                data-bs-dismiss="offcanvas"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="offcanvas-body">
+              <p><strong>ID:</strong> {{ currentEntry.id }}</p>
+              <p><strong>Category:</strong> {{ currentEntry.category }}</p>
+              <p><strong>Source IP:</strong> {{ currentEntry.source_ip }}</p>
+              <p>
+                <strong>Source Port:</strong> {{ currentEntry.source_port }}
+              </p>
+              <p>
+                <strong>Destination IP:</strong>
+                {{ currentEntry.destination_ip }}
+              </p>
+              <p>
+                <strong>Destination Port:</strong>
+                {{ currentEntry.destination_port }}
+              </p>
+              <p><strong>Time:</strong> {{ currentEntry.time }}</p>
+              <p><strong>Method:</strong> {{ currentEntry.request_method }}</p>
+              <p>
+                <strong>Request URI:</strong> {{ currentEntry.request_uri }}
+              </p>
+              <p><strong>Version:</strong> {{ currentEntry.http_version }}</p>
+              <p><strong>Header:</strong> {{ currentEntry.header_fields }}</p>
+              <p><strong>Body:</strong> {{ currentEntry.request_body }}</p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
@@ -397,6 +450,7 @@ export default {
         "XSS (Stored)": 0,
       },
       intervalId: null, // 定时器 ID
+      currentEntry: {}, // 当前选中的网络记录
     };
   },
   created() {
@@ -555,6 +609,9 @@ export default {
     beforeUnmount() {
       // 在组件销毁时清除定时器
       this.stopFetchingData();
+    },
+    setCurrentEntry(entry) {
+      this.currentEntry = entry;
     },
   },
 };
@@ -742,5 +799,11 @@ td span {
 .dropdown-menu {
   width: 100px !important;
   min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
+}
+
+.offcanvas-custom {
+  width: 50%; /* 设置offcanvas的宽度 */
+  height: 100%;
+  background-color: rgba(255, 255, 255, 1); /* 设置背景透明度 */
 }
 </style>
