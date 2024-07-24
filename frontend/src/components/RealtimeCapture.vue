@@ -140,7 +140,7 @@ const fetchStatus = async () => {
 const startCapture = async () => {
   try {
     const response = await axios.post("/api/sniffer/start", {
-      interface: "en0",
+      interface: "eth0",
     });
     if (response.data.status === "success") {
       isSniffing.value = true;

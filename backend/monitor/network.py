@@ -7,12 +7,21 @@ from multiprocessing import Event
 
 # 将项目根目录添加到 sys.path
 import sys, os
+import logging
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from backend.detect.ids import *
-from app import app
 
 
+# 配置全局变量
 HOST_URL = 'http://localhost:8001/'
+# 配置日志记录
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+file_handler = logging.FileHandler('monitor/insert.log')
+file_handler.setLevel(level=logging.INFO)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 def insert_http_data(http_data):
     # 从api中获得正在使用的表名
@@ -23,9 +32,8 @@ def insert_http_data(http_data):
     else:
         table_name = 'None'
         return None
-    print(f"Current using table: {table_name}")
-    
-    print(http_data)
+    # print(f"Current using table: {table_name}")
+    # print(http_data)
     try:
         response = requests.post(use_api_base_url + f'/{table_name}/insert', json=http_data)
         return response
@@ -34,12 +42,12 @@ def insert_http_data(http_data):
         return None
 
 def process_packet(packet):
-    print(f"Packet captured: {packet.summary()}")
+    # print(f"Packet captured: {packet.summary()}") # debug info
     if packet.haslayer(Raw):
         payload = packet[Raw].load.decode(errors='ignore')
         http_data = extract_http_data(packet, payload)
         if http_data:
-            print(f"HTTP data to be inserted: {http_data}")
+            # print(f"HTTP data to be inserted: {http_data}") # debug info
             
             # ----------------------------------------------------------------------------
             # 在这里调用IDS的逻辑，对http_data进行检测
@@ -48,9 +56,11 @@ def process_packet(packet):
             # ----------------------------------------------------------------------------
             
             # 把检测完毕的数据插入数据库
-            response = insert_http_data(http_data)
-            if response:
-                print('[+] Insert success.', response.json())
+            insert_http_data(http_data) # 不存储和记录response
+            # response = insert_http_data(http_data)
+            # if response:
+            #     # print('[+] Insert success.', response.json()) # debug info
+            #     logger.info('Insert success. Response: %s', response.json())
 
 def extract_http_data(packet, payload):
     if "HTTP" in payload:
