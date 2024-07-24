@@ -216,7 +216,6 @@
 </template>
 
 <script>
-import "bootstrap/dist/js/bootstrap.js";
 import axios from "axios";
 import { computed, inject } from "vue";
 import { mapGetters } from "vuex";
@@ -262,7 +261,8 @@ export default {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
           await navigator.clipboard.writeText(url);
-          alert("URL copied to clipboard");
+          // showPopover("success");
+          // alert("URL copied to clipboard");
           return;
         } catch (err) {
           console.error("Failed to copy using Clipboard API: ", err);
@@ -281,14 +281,17 @@ export default {
       try {
         const successful = document.execCommand("copy");
         if (successful) {
-          alert("URL copied to clipboard");
+          // showPopover("success");
+          // alert("URL copied to clipboard");
         } else {
           console.error("Fallback: Unable to copy");
-          alert("Fallback: Unable to copy");
+          // showPopover("error");
+          alert("Error copying URL");
         }
       } catch (err) {
         console.error("Fallback: Error copying URL: ", err);
-        alert("Fallback: Error copying URL");
+        // showPopover("error");
+        alert("Error copying URL");
       }
 
       document.body.removeChild(textArea);
