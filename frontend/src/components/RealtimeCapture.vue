@@ -210,8 +210,7 @@ onMounted(() => {
 // drop-down menu
 .dropdown-menu.show {
   margin-top: 12px;
-  margin-left: 10px;
+  margin-left: 6px;
   width: auto + 20px;
-  border-radius: 0;
 }
 </style>

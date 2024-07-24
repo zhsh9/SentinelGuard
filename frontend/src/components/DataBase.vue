@@ -8,7 +8,7 @@
       role="button"
       aria-haspopup="true"
       aria-expanded="false"
-      >Database</a
+      >Database Menu</a
     >
     <div class="dropdown-menu">
       <a
@@ -445,14 +445,6 @@ export default {
     outline: none;
     box-shadow: none;
   }
-}
-
-// drop-down menu
-.dropdown-menu.show {
-  margin-top: 29px;
-  margin-left: 5px;
-  width: auto;
-  border-radius: 0;
 }
 
 // font
