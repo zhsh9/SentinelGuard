@@ -31,25 +31,19 @@
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Total Number of Packets
-              <span class="badge bg-primary rounded-pill">{{
-                totalPackets
-              }}</span>
+              <span class="badge bg-info rounded-pill">{{ totalPackets }}</span>
             </li>
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Total Number of Threats
-              <span class="badge bg-primary rounded-pill">{{
-                totalThreats
-              }}</span>
+              <span class="badge bg-info rounded-pill">{{ totalThreats }}</span>
             </li>
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Categories Selected
-              <span
-                id="categories-selected"
-                class="badge bg-primary rounded-pill"
+              <span id="categories-selected" class="badge bg-info rounded-pill"
                 >{{ selectedCategories.length }} /
                 {{ configedCategories }}</span
               >
@@ -58,7 +52,7 @@
               class="list-group-item d-flex justify-content-between align-items-center"
             >
               Time of Capturing
-              <span class="badge bg-primary rounded-pill">{{
+              <span class="badge bg-info rounded-pill">{{
                 formattedTime
               }}</span>
             </li>
@@ -76,7 +70,7 @@
               @click="toggleCategorySelection(category)"
             >
               {{ category }}
-              <span class="badge bg-primary rounded-pill">{{ count }}</span>
+              <span :class="getCategoryBadgeClass(category)">{{ count }}</span>
             </li>
           </ul>
         </div>
@@ -225,7 +219,7 @@
         </div>
 
         <div class="table-responsive small">
-          <table class="table table-striped table-sm">
+          <table class="table table-hover table-striped table-sm">
             <thead>
               <tr>
                 <th scope="col">#</th>
@@ -244,8 +238,16 @@
             </thead>
             <tbody>
               <tr v-for="(entry, index) in filteredTableData" :key="entry.id">
-                <td>{{ index + 1 }}</td>
-                <td>{{ entry.category }}</td>
+                <td>
+                  <span :class="getCategoryEntryClass(entry.category)">
+                    {{ index + 1 }}
+                  </span>
+                </td>
+                <td>
+                  <span :class="getCategoryEntryClass(entry.category)">
+                    {{ entry.category }}
+                  </span>
+                </td>
                 <td>{{ entry.source_ip }}</td>
                 <td>{{ entry.source_port }}</td>
                 <td>{{ entry.destination_ip }}</td>
@@ -290,6 +292,21 @@ const categoryMap = {
   12: "XSS (Reflected)",
   13: "XSS (Stored)",
 };
+
+// 类别颜色映射
+const warningCategories = ["Insecure IPs", "Insecure Referers", "CVEs"];
+const dangerCategories = [
+  "Brute Force",
+  "Command Injection",
+  "CSRF",
+  "File Inclusion",
+  "File Upload",
+  "Insecure CAPTCHA",
+  "SQL Injection",
+  "SQL Injection (Blind)",
+  "XSS (Reflected)",
+  "XSS (Stored)",
+];
 
 export default {
   name: "DashBoard",
@@ -479,19 +496,6 @@ export default {
       }
     },
     getCategoryClass(category) {
-      const warningCategories = ["Insecure IPs", "Insecure Referers", "CVEs"];
-      const dangerCategories = [
-        "Brute Force",
-        "Command Injection",
-        "CSRF",
-        "File Inclusion",
-        "File Upload",
-        "Insecure CAPTCHA",
-        "SQL Injection",
-        "SQL Injection (Blind)",
-        "XSS (Reflected)",
-        "XSS (Stored)",
-      ];
       let className =
         "list-group-item d-flex justify-content-between align-items-center";
       if (warningCategories.includes(category)) {
@@ -505,6 +509,42 @@ export default {
         className += " active";
       }
       return className;
+    },
+    getCategoryBadgeClass(category) {
+      let className = "badge rounded-pill";
+      if (warningCategories.includes(category)) {
+        className += " bg-warning";
+      } else if (dangerCategories.includes(category)) {
+        className += " bg-danger";
+      } else {
+        className += " bg-primary";
+      }
+      return className;
+    },
+    getCategoryEntryClass(category) {
+      const normalCategories = [-1, 0];
+      const warningCategories = [1, 2, 3];
+      const dangerCategories = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+      const numericCategory = Number(category);
+
+      console.log(
+        "Category: ",
+        numericCategory,
+        normalCategories.includes(numericCategory),
+        warningCategories.includes(numericCategory),
+        dangerCategories.includes(numericCategory)
+      );
+
+      if (normalCategories.includes(numericCategory)) {
+        return "badge rounded-pill bg-primary";
+      } else if (warningCategories.includes(numericCategory)) {
+        return "badge rounded-pill bg-warning";
+      } else if (dangerCategories.includes(numericCategory)) {
+        return "badge rounded-pill bg-danger";
+      } else {
+        return "";
+      }
     },
     mounted() {
       // 初始加载时检查 isSniffing 状态
@@ -691,6 +731,15 @@ tbody tr {
   margin-bottom: 0;
 }
 ww .dropdown-menu {
+  width: 100px !important;
+  min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
+}
+
+td span {
+  font-weight: bolder;
+}
+
+.dropdown-menu {
   width: 100px !important;
   min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
 }
