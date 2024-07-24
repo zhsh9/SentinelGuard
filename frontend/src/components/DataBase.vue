@@ -350,7 +350,7 @@ export default {
         });
         console.log("Create database response:", response.data);
         if (response.data.status === "200") {
-          alert(response.data.message);
+          // alert(response.data.message);
           await this.fetchDBInfo(); // 更新数据库列表
         }
       } catch (error) {
@@ -373,7 +373,7 @@ export default {
         });
         console.log("Switch database response:", response.data);
         if (response.data.status === "200") {
-          alert("Database switched successfully");
+          // alert("Database switched successfully"); // 不使用alert 比较不美观
           await this.fetchDBInfo(); // 更新数据库信息
         } else {
           alert("Error switching database");
@@ -390,7 +390,7 @@ export default {
         const response = await axios.get(`/api/db/${this.curDbPath}/clean`);
         console.log("Empty database response:", response.data);
         if (response.data.status === "200") {
-          alert("Database emptied successfully");
+          // alert("Database emptied successfully");
           // 刷新页面
           // window.location.reload();
           // 触发数据重新加载事件

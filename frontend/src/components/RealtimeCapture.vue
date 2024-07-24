@@ -148,7 +148,7 @@ const startCapture = async () => {
       timerStore.startNewTimer();
       timerStore.startTimer();
     }
-    alert(response.data.message);
+    // alert(response.data.message);
     hideModal("startCaptureModal");
   } catch (error) {
     console.error("Error starting sniffer:", error);
@@ -163,7 +163,7 @@ const stopCapture = async () => {
       store.dispatch("updateIsSniffing", isSniffing.value);
       timerStore.stopTimer();
     }
-    alert(response.data.message);
+    // alert(response.data.message);
     hideModal("stopCaptureModal");
   } catch (error) {
     console.error("Error stopping sniffer:", error);
