@@ -88,11 +88,77 @@
         >
           <h1 class="h2">Dashboard</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
+            <!-- SVG Symbol Definitions -->
+            <svg style="display: none">
+              <symbol id="calendar3" fill="currentColor" viewBox="0 0 16 16">
+                <path
+                  d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"
+                />
+              </symbol>
+              <symbol
+                id="share"
+                fill="currentColor"
+                viewBox="0 0 458.624 458.624"
+              >
+                <path
+                  d="M339.588,314.529c-14.215,0-27.456,4.133-38.621,11.239l-112.682-78.67c1.809-6.315,2.798-12.976,2.798-19.871 c0-6.896-0.989-13.557-2.798-19.871l109.64-76.547c11.764,8.356,26.133,13.286,41.662,13.286c39.79,0,72.047-32.257,72.047-72.047 C411.634,32.258,379.378,0,339.588,0c-39.79,0-72.047,32.257-72.047,72.047c0,5.255,0.578,10.373,1.646,15.308l-112.424,78.491 c-10.974-6.759-23.892-10.666-37.727-10.666c-39.79,0-72.047,32.257-72.047,72.047s32.256,72.047,72.047,72.047 c13.834,0,26.753-3.907,37.727-10.666l113.292,79.097c-1.629,6.017-2.514,12.34-2.514,18.872c0,39.79,32.257,72.047,72.047,72.047 c39.79,0,72.047-32.257,72.047-72.047C411.635,346.787,379.378,314.529,339.588,314.529z"
+                />
+              </symbol>
+              <symbol id="export" fill="currentColor" viewBox="0 0 24 24">
+                <polyline
+                  points="15 3 21 3 21 9"
+                  style="
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    stroke-width: 1.5;
+                  "
+                ></polyline>
+                <path
+                  d="M21,13v7a1,1,0,0,1-1,1H4a1,1,0,0,1-1-1V4A1,1,0,0,1,4,3h7"
+                  style="
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    stroke-width: 1.5;
+                  "
+                ></path>
+                <line
+                  x1="11"
+                  y1="13"
+                  x2="21"
+                  y2="3"
+                  style="
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    stroke-width: 1.5;
+                  "
+                ></line>
+              </symbol>
+            </svg>
+            <!-- Buttons -->
             <div class="btn-group me-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                @click="shareUrl"
+              >
+                <svg class="bi">
+                  <use xlink:href="#share"></use>
+                </svg>
                 Share
               </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
+              >
+                <svg class="bi">
+                  <use xlink:href="#export"></use>
+                </svg>
                 Export
               </button>
             </div>
@@ -100,7 +166,9 @@
               type="button"
               class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
             >
-              <svg class="bi"><use xlink:href="#calendar3" /></svg>
+              <svg class="bi">
+                <use xlink:href="#calendar3"></use>
+              </svg>
               This week
             </button>
           </div>
@@ -186,9 +254,50 @@ export default {
       return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     });
 
+    // 方法：分享 URL
+    const shareUrl = async () => {
+      const url = window.location.href;
+
+      // 使用 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("URL copied to clipboard");
+          return;
+        } catch (err) {
+          console.error("Failed to copy using Clipboard API: ", err);
+        }
+      }
+
+      // 回退到 document.execCommand 方法
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed"; // 避免滚动到页面底部
+      textArea.style.opacity = "0"; // 隐藏文本区域
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+          alert("URL copied to clipboard");
+        } else {
+          console.error("Fallback: Unable to copy");
+          alert("Fallback: Unable to copy");
+        }
+      } catch (err) {
+        console.error("Fallback: Error copying URL: ", err);
+        alert("Fallback: Error copying URL");
+      }
+
+      document.body.removeChild(textArea);
+    };
+
     // 返回 setup 中的属性和方法
     return {
       formattedTime,
+      shareUrl,
     };
   },
   data() {
