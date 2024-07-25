@@ -7,17 +7,24 @@ API for database operations
 - /api/db/drop: 删除表
 - /api/db/drop_all: 删除所有表
 - /api/db/info: 列出所有表，以及表环境变量
+
 - /api/db/<table_name>/info: 获取表的信息
 - /api/db/<table_name>/insert: 插入数据
 - /api/db/<table_name>/select: 查询数据
+- /api/db/<table_name>/update: 更新数据
 - /api/db/<table_name>/delete: 删除数据
 - /api/db/<table_name>/clean: 清空表
 - /api/db/<table_name>/drop: 删除表
+
+- /api/db/mapper/insert: 插入表名映射关系
+- /api/db/mapper/select: 查询所有的表名映射关系
+- /api/db/mapper/update: 更新表名映射关系
+- /api/db/mapper/delete: 删除表名映射关系
 """
 import json
 from app import app, db
 from flask import jsonify, request
-from datetime import datetime
+from datetime import datetime, timezone
 from database.model import *
 import requests
 # 数据库操作
@@ -29,18 +36,24 @@ from sqlalchemy.exc import SQLAlchemyError
 """
 tables: maintain all tables created in the database
 {
-    'formatted_time1': {
-        'table_name': 'http_request_log_20210901120000',
+    'frontend_table_name1': {
+        'backend_table_name': 'http_request_log_20210901120000',
         'using': True,
     },
-    'formatted_time2': {
-        'table_name': 'http_request_log_20220901120000',
+    'frontend_table_name1': {
+        'backend_table_name': 'http_request_log_20220901120000',
         'using': False,
     },
+}
+table_name_mapper: 维护表名到表的映射关系
+{
+    'frontend_table_name1': 'http_request_log_20210901120000',
+    'frontend_table_name2': 'http_request_log_20220901120000',
 }
 """
 # 用于存储表信息的字典
 tables = app.config['TABLES']
+table_mapper = app.config['TABLE_MAPPER']
 initialized = False  # 初始化标志
 
 # 把 tables 转换为格式化的字符串
@@ -60,24 +73,27 @@ def format_log_dict(log_dict):
 
 # 根据 time | 表名 把当前表设置为正在使用
 # 可以接受的输入为：20210901120000, dynamic_http_request_log_20210901120000
-def set_using(table_name: str):
-    if table_name.startswith(app.config['SQL_TABLE_NAME_PREFIX']):
-        # 表名就符合规则的 dynamic_http_request_log_20210901120000 格式
-        time = table_name.split('_')[-1]
-    else:
-        # 构造表名
-        time = table_name
-        table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
-    
-    # 调用 use API 设置当前的 table_name 为 using=True 的状态
+def set_using(frontend_table_name: str):    
+    # 调用 use API 设置当前的 frontend_tablename 为 using=True 的状态
     use_api_url = request.host_url + 'api/db/use'
-    response = requests.post(use_api_url, json={'table_name': table_name})
+    response = requests.post(use_api_url, json={'frontend_table_name': frontend_table_name})
+    time = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S') # 获取当前时间
     
     # 判断修改表的状态为正在使用成功与否
     if response.status_code != 200:
         return {'error': 'Failed to set table as using'}, False, response.status_code, None, None
     else:
-        return {'message': 'Successfully set table as using'}, True, response.status_code, table_name, time
+        return {'message': 'Successfully set table as using'}, True, response.status_code, frontend_table_name, time
+
+# 查询数据库中的映射表，更新 table_mapper 中的映射关系（环境变量更新）
+def update_table_mapper():
+    # 检查映射表，添加到 table_mapper 中
+    with app.app_context():
+        # 查询映射表
+        table_mapper_records = TableMapper.query.all()
+        # print('table_mapper_records:', table_mapper_records)
+        for record in table_mapper_records:
+            table_mapper[record.frontend_table_name] = record.backend_table_name
 
 """
 第一部分: DCL (Data Control Language) 数据控制
@@ -89,23 +105,42 @@ def set_using(table_name: str):
 - /api/db/info: 列出所有表，以及表环境变量
 """
 
+# 启动时，创建数据库表
+@app.before_request
+def create_tables():
+    db.create_all()
+
 # 启动时，检查数据库中已经存在的表，添加到 tables 中
+# 启动时，检查映射表，添加到 table_mapper 中
 @app.before_request
 def init():
     global initialized
     if not initialized:
+        # 检查数据库中已经存在的表，添加到 tables 中
         with app.app_context():
             inspector = inspect(db.engine)
             table_names = inspector.get_table_names()
+            # print('table_names:', table_names)
+            # 如果 table_names 中有 table_mapper 表，则删除
+            if 'table_mapper' in table_names:
+                table_names.remove('table_mapper')
             
-            # 刚启动的时候，没有表是被使用的
+            # 检查映射表，添加到 table_mapper 中
+            update_table_mapper()
+            
+            # 构建 tables 字典
             for table_name in table_names:
-                time = table_name.split('_')[-1]
-                tables[time] = {
-                    'table_name': table_name,
-                    'using': False,
-                }
-
+                if table_name not in table_mapper.values():
+                    return jsonify({'error': 'Failed to initialize database'}), 500
+                # 查找对应的前端表
+                for k, v in table_mapper.items():
+                    if v == table_name:
+                        tables[k] = {
+                            "backend_table_name": table_name,
+                            "using": False
+                        } # 刚启动时，默认没有使用任何表
+        
+        print(f'Initialized database successfully:\ntable_mapper:{table_mapper}\ntables:{tables}')
         initialized = True
 
 # API: Create a new table for HttpRequestLog based on time
@@ -115,75 +150,84 @@ def create_table():
         return jsonify({'error': 'Content-Type must be application/json'}), 415
 
     data = request.json
-    time = data.get('time')
-    if not time:
-        return jsonify({'error': 'Time is required'}), 400
+    frontend_tablename = data.get('fontend_tablename', '')
+    if len(frontend_tablename) == 0:
+        return jsonify({'error': 'Table name is required'}), 400
     
     try:
-        time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S')
-        new_table, table_name = create_dynamic_http_request_log_class(time)
+        # 检查前端表名是否存在
+        if frontend_tablename in table_mapper:
+            return jsonify({'status': '200', 'deplicated': True, 'message': f'Table {frontend_tablename} already exists'}), 200
         
-        # 检查表是否存在
+        time = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+        new_table, backend_tablename = create_dynamic_http_request_log_class(time, frontend_tablename) # 创建表的时候，需要传入前端的表名，用于创建映射关系
+        
+        # 检查后端表是否存在
         inspector = inspect(db.engine)
-        if not inspector.has_table(table_name):
+        if not inspector.has_table(backend_tablename):
             # 创建表
-            tables[time] = {
-                'table_name': table_name,
+            tables[frontend_tablename] = {
+                'backend_table_name': backend_tablename,
                 'using': False,
             }
             new_table.__table__.create(db.engine)
-            set_using(table_name)
-            return jsonify({'status': '200', 'message': f'Table {table_name} created successfully'}), 200
+            
+            # 更新配置
+            set_using(frontend_tablename)
+            update_table_mapper()
+            # return jsonify({'status': '200', 'deplicated': False, 'message': f'Table {{frontend_tablename: {frontend_tablename}, backend_tablename: {backend_tablename}}} created successfully'}), 200
+            return jsonify({'status': '200', 'deplicated': False, 'message': f'Table {frontend_tablename} created successfully'}), 200
         else:
-            return jsonify({'status': '200', 'message': f'Table {table_name} already exists'}), 200
+            return jsonify({'status': '200', 'deplicated': True, 'message': f'Table {frontend_tablename} already exists'}), 200
+
+        # 检查映射表是否存在
         
     except SQLAlchemyError as e:
         return jsonify({'error': str(e)}), 500
     except ValueError as e:
-        return jsonify({'error': 'Invalid time format. Expected format: YYYY-MM-DD HH:MM:SS'}), 400
+        return jsonify({'error': str(e)}), 400
 
-# API: 定义正在使用的表名 using=True
+# API: 定义正在使用的后端表名 using=True
 @app.route('/api/db/use', methods=['GET', 'POST'])
 def change_using():
     if request.method == 'GET':
         # 如果是 GET 请求，更改正在使用的表名
-        time_str = request.args.get('table_name') # http://localhost:8001/api/db/use?table_name=20240701100000
+        frontend_table_name = request.args.get('frontend_table_name') # http://localhost:8001/api/db/use?table_name=frontend_table_name
     elif request.method == 'POST':
         # 如果是 POST 请求，更改正在使用的表名
         if request.content_type != 'application/json':
             return jsonify({'error': 'Content-Type must be application/json'}), 415
 
-        time_str = request.json.get('table_name') # time_str: time_str: ['dynamic_http_request_log_20240701100000'] -> only select the first item
-        time_str = time_str[0] if isinstance(time_str, list) else time_str
+        frontend_table_name = request.json.get('frontend_table_name') # post body: {"table_name": "frontend_table_name"}
+        frontend_table_name = frontend_table_name[0] if isinstance(frontend_table_name, list) else frontend_table_name
 
-    if time_str is None:
+    if frontend_table_name is None:
         return jsonify({'error': 'Table name is required'}), 400
-
-    time = time_str.split('_')[-1]
-
-    # 检查表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
-    if not time_str or time not in tables.keys():
-        return jsonify({'error': 'Invalid table name'}), 400
     
-    # 构造表名
-    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+    # 获取后端表名
+    if frontend_table_name in table_mapper.keys():
+        backend_table_name = table_mapper[frontend_table_name]
 
-    # 检查表是否存在
+    # 检查前端表名是否有效 + 是否正在被使用 如果没有 就切换正在使用的表
+    if frontend_table_name not in table_mapper.keys() or backend_table_name is None:
+        return jsonify({'error': 'Invalid table name'}), 400
+
+    # 检查后端表是否存在
     inspector = inspect(db.engine)
-    if not inspector.has_table(table_name):
+    if not inspector.has_table(backend_table_name):
         return jsonify({'error': 'Table not found'}), 404
     
     # 检查表是否正在被使用
-    if not tables[time]['using']:
+    if not tables[frontend_table_name]['using']:
         # 寻找当前正在使用的表，置为不使用
         for key in tables:
             if tables[key]['using']:
                 tables[key]['using'] = False
                 break
         # 切换正在使用的表
-        tables[time]['using'] = True
+        tables[frontend_table_name]['using'] = True
     
-    return jsonify({'status': '200', 'msg': f'Table {table_name} is now being used'}), 200
+    return jsonify({'status': '200', 'msg': f'Table {frontend_table_name} is now being used'}), 200
 
 # API: Drop HttpRequestLog table
 @app.route('/api/db/drop', methods=['POST'])
@@ -235,19 +279,24 @@ def drop_all_tables():
 # API: 定义查看所有表名的 API 端点
 @app.route('/api/db/info', methods=['GET'])
 def list_tables():
+    global tables
     inspector = db.inspect(db.engine)
     ret_tables = inspector.get_table_names()
+    # 如果存在，变量中删除 table_mapper 这个表
+    if 'table_mapper' in ret_tables:
+        ret_tables.remove('table_mapper')
 
     # ret_tables_str = format_log_dict(tables)
     # print(ret_tables_str)
     
     # 检查数据库中的表和环境变量中的表是否一致
+    print('/api/db/info', tables)
     checker1 = set(ret_tables)
-    checker2 = set([v['table_name'] for v in tables.values()])
+    checker2 = set([v['backend_table_name'] for v in tables.values()])
     if len(checker1 - checker2) != 0:
         return jsonify({'error': 'Database and environment variables are inconsistent'}), 500
     
-    return jsonify({'tables': ret_tables, 'tables_verbose': tables}), 200
+    return jsonify({'tables': ret_tables, 'tables_verbose': tables, 'table_mapper': table_mapper}), 200
 
 def is_valid_datetime_format(date_string):
     try:
@@ -507,13 +556,18 @@ def clean_table(table_name):
 API:
 - /api/db/cur_db: get current using db
 """
-
 @app.route('/api/db/cur_db', methods=['GET'])
 def get_cur_db():
     if True in [tables[key]['using'] for key in tables]:
-        current_using_tables = [tables[key]['table_name'] for key in tables if tables[key]['using']]
+        # 获取后端表名
+        current_using_tables = [tables[key]['backend_table_name'] for key in tables if tables[key]['using']]
         if len(current_using_tables) == 1:
-            return jsonify({'status': '200', 'table_name': f'{current_using_tables[0]}', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
+            # 根据映射表查询前端表名
+            for k,v in table_mapper.items():
+                if v == current_using_tables[0]:
+                    return jsonify({'status': '200', 'table_name': f'{k}', 'msg': f'Currently using table {k}'}), 200
+                    # return jsonify({'status': '200', 'table_name': f'{current_using_tables[0]}', 'msg': f'Currently using table {current_using_tables[0]}'}), 200
+            return jsonify({'status': '400', 'msg': 'Frontend table name and backend table name are not matched.'}), 400
         else:
             # Only one table is allowed to configured as using
             # Set all tables to using=False
@@ -522,3 +576,27 @@ def get_cur_db():
             return jsonify({'status': '400', 'msg': 'Multiple tables are currently being used'}), 400
     else:
         return jsonify({'status': '200', 'msg': 'No table is currently being used'}), 200
+
+
+"""
+API:
+- /api/db/mapper/insert: 插入表名映射关系
+- /api/db/mapper/select: 查询所有的表名映射关系
+- /api/db/mapper/update: 更新表名映射关系
+- /api/db/mapper/delete: 删除表名映射关系
+"""
+@app.route('/api/db/mapper/select', methods=['GET'])
+def select_table_mapping():
+    try:
+        # 查询所有的表名映射关系
+        table_mappings = TableMapping.query.all()
+        if not table_mappings:
+            return jsonify({'status': '200', 'msg': 'No table mapping found'}), 200
+        
+        # 返回所有表名映射关系
+        return jsonify({'status': '200', 'msg': 'Table mapping found', 'table_mappings': [{'id': table_mapping.id, 'frontend_table_name': table_mapping.frontend_table_name, 'backend_table_name': table_mapping.backend_table_name, 'created_at': table_mapping.created_at.strftime('%Y-%m-%d %H:%M:%S')} for table_mapping in table_mappings]}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        # 记录并返回详细错误信息
+        error_details = str(e.__dict__.get('orig', e))
+        return jsonify({'error': error_details}), 500

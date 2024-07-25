@@ -47,13 +47,14 @@ class Config:
     # ------------------------------- Database -------------------------------
     SQL_DB_NAME = 'sentinel'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, f'app.db')
+        'sqlite:///' + os.path.join(basedir, f'{SQL_DB_NAME}.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQL_CLASS_NAME_PREFIX = r'DynamicHttpRequestLog_'
     SQL_TABLE_NAME_PREFIX = r'dynamic_http_request_log_'
     SQL_TIME_FORMAT = r'%Y-%m-%d %H:%M:%S'
     
     TABLES = {}
+    TABLE_MAPPER = {}
     USING_TABLE = ''
     
     # ------------------------------- Data Collection -------------------------------

@@ -22,8 +22,20 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sqlalchemy import Column, Integer, String, Text, LargeBinary
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from datetime import datetime
+from datetime import datetime, timezone
 from app import app, db
+
+# 定义一个表名映射表
+class TableMapper(db.Model):
+    __tablename__ = 'table_mapper'
+    id = db.Column(db.Integer, primary_key=True)
+    frontend_table_name = db.Column(db.String(256), nullable=False, unique=True)
+    backend_table_name = db.Column(db.String(256), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=lambda : datetime.now(timezone.utc))  # ensure that the created_at field gets the current time at the moment when a new record is created, not when the class is defined.
+
+    def __repr__(self):
+        return f'<TableMapping {self.frontend_table_name} -> {self.backend_table_name}>'
+
 
 # 获取 SQLAlchemy 的 Model 元类
 ModelMeta = type(db.Model)
@@ -59,7 +71,7 @@ class ModelGenerator(CustomModelMeta):
         return super(ModelGenerator, cls).__new__(cls, name, bases, dct)
 
 # 使用元类生成 HttpRequestLog 类
-def create_dynamic_http_request_log_class(ds: str):
+def create_dynamic_http_request_log_class(ds: str, frontend_table_name: str):
     """动态创建带有给定时间戳和表名包含时间戳的 HttpRequestLog 类"""
     class_name = f"{app.config['SQL_CLASS_NAME_PREFIX']}{ds}"
     table_name = f"{app.config['SQL_TABLE_NAME_PREFIX']}{ds}"
@@ -90,6 +102,11 @@ def create_dynamic_http_request_log_class(ds: str):
 
     # 使用 type 创建类
     DynamicHttpRequestLog = ModelGenerator(class_name, (db.Model,), class_attributes)
+    
+    # 创建映射记录
+    mapping_record = TableMapper(frontend_table_name=frontend_table_name, backend_table_name=table_name)
+    db.session.add(mapping_record)
+    db.session.commit()
 
     return DynamicHttpRequestLog, table_name
 

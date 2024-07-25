@@ -330,7 +330,7 @@ export default {
       try {
         // 获取当前有哪些表
         const response = await axios.get("/api/db/info");
-        this.databases = response.data.tables;
+        this.databases = Object.keys(response.data.table_mapper);
         console.log("Database info:", response.data);
 
         // 获取当前正在使用的表名
@@ -346,12 +346,17 @@ export default {
     async createDB() {
       try {
         const response = await axios.post("/api/db/create", {
-          time: this.newDatabaseName,
+          fontend_tablename: this.newDatabaseName,
         });
         console.log("Create database response:", response.data);
-        if (response.data.status === "200") {
+        if (
+          response.data.status === "200" &&
+          response.data.deplicated === false
+        ) {
           // alert(response.data.message);
           await this.fetchDBInfo(); // 更新数据库列表
+        } else {
+          alert(response.data.message);
         }
       } catch (error) {
         console.error("Error creating database:", error);
@@ -369,7 +374,7 @@ export default {
     async switchDB() {
       try {
         const response = await axios.post("/api/db/use", {
-          table_name: this.selectedDatabase,
+          frontend_table_name: this.selectedDatabase,
         });
         console.log("Switch database response:", response.data);
         if (response.data.status === "200") {
