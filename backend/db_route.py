@@ -355,7 +355,8 @@ def insert_record(table_name):
             'request_uri': data['request_uri'],
             'http_version': data['http_version'],
             'header_fields': data['header_fields'],
-            'request_body': data.get('request_body')
+            'request_body': data.get('request_body', ''),
+            'raw_packet': data.get('raw_packet', ''),
         }
         
         # 插入记录a

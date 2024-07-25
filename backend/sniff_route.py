@@ -9,7 +9,7 @@ from flask import Flask, request, jsonify
 from multiprocessing import Process, Event
 import time
 from app import app
-import monitor.network as monitor
+import monitor.sniff as monitor
 
 # 使用Event来共享状态变量
 is_sniffing = app.config['IS_SNIFFING'] = Event()

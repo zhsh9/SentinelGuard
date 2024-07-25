@@ -1,5 +1,6 @@
 """
 Model Design: DDL (Data Definition Language)
+DynamicHttpRequestLog
     ID: int
     Category: string
     Source IP Address: string
@@ -12,6 +13,9 @@ Model Design: DDL (Data Definition Language)
     HTTP Version: string
     Header Fields: string (json string)
     Request Body (POST requests only): string (json string)
+TableNameMapper
+    Table Name in Frontend: string
+    Table Name in Backend: string
 """
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -43,7 +47,7 @@ class ModelGenerator(CustomModelMeta):
         dct['http_version'] = Column(String(16), nullable=False)
         dct['header_fields'] = Column(Text, nullable=False)  # JSON string
         dct['request_body'] = Column(Text, nullable=True)  # JSON string, for POST requests only
-        # dct['raw_packet'] = Column(LargeBinary, nullable=False)  # Binary data for the raw packet
+        dct['raw_packet'] = Column(Text, nullable=False)  # Base64 encoded string for the raw packet
 
         def __repr__(self):
             return (f'<{name} {self.source_ip}:{self.source_port} -> '
@@ -55,7 +59,6 @@ class ModelGenerator(CustomModelMeta):
         return super(ModelGenerator, cls).__new__(cls, name, bases, dct)
 
 # 使用元类生成 HttpRequestLog 类
-
 def create_dynamic_http_request_log_class(ds: str):
     """动态创建带有给定时间戳和表名包含时间戳的 HttpRequestLog 类"""
     class_name = f"{app.config['SQL_CLASS_NAME_PREFIX']}{ds}"
@@ -77,7 +80,7 @@ def create_dynamic_http_request_log_class(ds: str):
         'http_version': Column(String(16), nullable=False),
         'header_fields': Column(Text, nullable=False),  # JSON string
         'request_body': Column(Text, nullable=True),  # JSON string, for POST requests only,
-        # 'raw_packet': Column(LargeBinary, nullable=False),  # Binary data for the raw packet
+        'raw_packet': Column(Text, nullable=False),  # Base64 encoded string for the raw packet
         '__repr__': lambda self: (
             f'<HttpRequestLog {self.source_ip}:{self.source_port} -> '
             f'{self.destination_ip}:{self.destination_port}: '
