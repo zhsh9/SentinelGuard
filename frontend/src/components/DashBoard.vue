@@ -582,13 +582,13 @@ export default {
 
       const numericCategory = Number(category);
 
-      console.log(
-        "Category: ",
-        numericCategory,
-        normalCategories.includes(numericCategory),
-        warningCategories.includes(numericCategory),
-        dangerCategories.includes(numericCategory)
-      );
+      // console.log(
+      //   "Category: ",
+      //   numericCategory,
+      //   normalCategories.includes(numericCategory),
+      //   warningCategories.includes(numericCategory),
+      //   dangerCategories.includes(numericCategory)
+      // );
 
       if (normalCategories.includes(numericCategory)) {
         return "badge rounded-pill bg-primary";

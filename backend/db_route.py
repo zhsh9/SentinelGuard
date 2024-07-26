@@ -29,7 +29,7 @@ from database.model import *
 import requests
 # 数据库操作
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Table, MetaData, inspect, select, func, insert
+from sqlalchemy import Table, MetaData, inspect, select, func, insert, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -77,13 +77,23 @@ def set_using(frontend_table_name: str):
     # 调用 use API 设置当前的 frontend_tablename 为 using=True 的状态
     use_api_url = request.host_url + 'api/db/use'
     response = requests.post(use_api_url, json={'frontend_table_name': frontend_table_name})
-    time = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S') # 获取当前时间
+    # time = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S') # 获取当前时间
+    
+    # 根据前端表名查找后端表名
+    if frontend_table_name not in tables:
+        return {'error': 'Table not found'}, None, 404, None, None
+    backend_table_name = tables[frontend_table_name]['backend_table_name']
+    
+    # 检查后端表是否存在
+    inspector = inspect(db.engine)
+    if not inspector.has_table(backend_table_name):
+        return {'error': 'Table not found'}, None, 404, None, None
     
     # 判断修改表的状态为正在使用成功与否
     if response.status_code != 200:
         return {'error': 'Failed to set table as using'}, False, response.status_code, None, None
     else:
-        return {'message': 'Successfully set table as using'}, True, response.status_code, frontend_table_name, time
+        return {'message': 'Successfully set table as using'}, True, response.status_code, frontend_table_name, backend_table_name
 
 # 查询数据库中的映射表，更新 table_mapper 中的映射关系（环境变量更新）
 def update_table_mapper():
@@ -94,6 +104,28 @@ def update_table_mapper():
         # print('table_mapper_records:', table_mapper_records)
         for record in table_mapper_records:
             table_mapper[record.frontend_table_name] = record.backend_table_name
+
+def update_tables():
+    # 检查数据库中已经存在的表，添加到 tables 中
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        # print('table_names:', table_names)
+        # 如果 table_names 中有 table_mapper 表，则删除
+        if 'table_mapper' in table_names:
+            table_names.remove('table_mapper')
+        
+        # 构建 tables 字典
+        for table_name in table_names:
+            if table_name not in table_mapper.values():
+                return jsonify({'error': 'Failed to initialize database'}), 500
+            # 查找对应的前端表
+            for k, v in table_mapper.items():
+                if v == table_name:
+                    tables[k] = {
+                        "backend_table_name": table_name,
+                        "using": False
+                    } # 刚启动时，默认没有使用任何表
 
 """
 第一部分: DCL (Data Control Language) 数据控制
@@ -116,29 +148,11 @@ def create_tables():
 def init():
     global initialized
     if not initialized:
+        # 检查映射表，添加到 table_mapper 中
+        update_table_mapper()
+
         # 检查数据库中已经存在的表，添加到 tables 中
-        with app.app_context():
-            inspector = inspect(db.engine)
-            table_names = inspector.get_table_names()
-            # print('table_names:', table_names)
-            # 如果 table_names 中有 table_mapper 表，则删除
-            if 'table_mapper' in table_names:
-                table_names.remove('table_mapper')
-            
-            # 检查映射表，添加到 table_mapper 中
-            update_table_mapper()
-            
-            # 构建 tables 字典
-            for table_name in table_names:
-                if table_name not in table_mapper.values():
-                    return jsonify({'error': 'Failed to initialize database'}), 500
-                # 查找对应的前端表
-                for k, v in table_mapper.items():
-                    if v == table_name:
-                        tables[k] = {
-                            "backend_table_name": table_name,
-                            "using": False
-                        } # 刚启动时，默认没有使用任何表
+        update_tables()
         
         print(f'Initialized database successfully:\ntable_mapper:{table_mapper}\ntables:{tables}')
         initialized = True
@@ -173,8 +187,10 @@ def create_table():
             new_table.__table__.create(db.engine)
             
             # 更新配置
-            set_using(frontend_tablename)
             update_table_mapper()
+            update_tables()
+            set_using(frontend_tablename)
+            
             # return jsonify({'status': '200', 'deplicated': False, 'message': f'Table {{frontend_tablename: {frontend_tablename}, backend_tablename: {backend_tablename}}} created successfully'}), 200
             return jsonify({'status': '200', 'deplicated': False, 'message': f'Table {frontend_tablename} created successfully'}), 200
         else:
@@ -229,57 +245,19 @@ def change_using():
     
     return jsonify({'status': '200', 'msg': f'Table {frontend_table_name} is now being used'}), 200
 
-# API: Drop HttpRequestLog table
-@app.route('/api/db/drop', methods=['POST'])
+# 删除指定的后端表，并且更新 table_mapper 表中的表名映射 TODO
+@app.route('/api/db/drop', methods=['GET', 'POST'])
 def drop_table():
-    if request.content_type != 'application/json':
-        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    pass
 
-    time_str = request.json.get('table_name') # 可以输入一长串表名字符串，也可以只输入最后的时间格式
-    time = time_str.split('_')[-1]
-
-    # 检查输入是否符合格式
-    if not time_str or time not in tables.keys() or not tables[time]['using']:
-        return jsonify({'error': 'Invalid or inactive table name'}), 400
-    
-    # 构造表名
-    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
-
-    # 检查表是否存在
-    inspector = inspect(db.engine)
-    if not inspector.has_table(table_name):
-        return jsonify({'error': 'Table not found'}), 404
-
-    try:
-        metadata = MetaData()
-        table = Table(table_name, metadata, autoload_with=db.engine)
-
-        table.drop(db.engine)
-        del tables[time]
-
-        db.session.commit()
-        return jsonify({'status': '200', 'msg': f'Table {table_name} dropped'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-# API: Drop all tables
+# 删除除了 table_mapper 的所有表，并且把 table_mapper 表清空，其中的数据更新到环境变量 tables TODO
 @app.route('/api/db/drop_all', methods=['GET', 'POST'])
 def drop_all_tables():
-    try:
-        db.reflect()  # Reflect the database schema to SQLAlchemy
-        db.drop_all()  # Drop all reflected tables
-        db.session.commit()  # Commit the transaction
-        tables.clear()
-        return jsonify({'status': '200', 'msg': 'All tables dropped'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-    
+    pass
+
 # API: 定义查看所有表名的 API 端点
 @app.route('/api/db/info', methods=['GET'])
 def list_tables():
-    global tables
     inspector = db.inspect(db.engine)
     ret_tables = inspector.get_table_names()
     # 如果存在，变量中删除 table_mapper 这个表
@@ -290,11 +268,11 @@ def list_tables():
     # print(ret_tables_str)
     
     # 检查数据库中的表和环境变量中的表是否一致
-    print('/api/db/info', tables)
+    # print('/api/db/info', tables)
     checker1 = set(ret_tables)
     checker2 = set([v['backend_table_name'] for v in tables.values()])
     if len(checker1 - checker2) != 0:
-        return jsonify({'error': 'Database and environment variables are inconsistent'}), 500
+        return jsonify({'error': 'Database and environment variables are inconsistent', 'ret_tables': ret_tables, 'tables': tables}), 500
     
     return jsonify({'tables': ret_tables, 'tables_verbose': tables, 'table_mapper': table_mapper}), 200
 
@@ -312,57 +290,52 @@ def is_valid_datetime_format(date_string):
 - /api/db/<table_name>/info: 获取表的信息
 - /api/db/<table_name>/insert: 插入数据
 - /api/db/<table_name>/select: 查询数据
+- /api/db/<table_name>/update: 更新数据
 - /api/db/<table_name>/delete: 删除数据
 - /api/db/<table_name>/clean: 清空表
 """
 
 # 获取这个表的相关信息
-@app.route('/api/db/<table_name>/info', methods=['GET'])
-def get_table_info(table_name):
-    # 可以输入一长串表名字符串，也可以只输入最后的时间格式
-    time_str = table_name
-    time = time_str.split('_')[-1]
-
-    # 检查输入是否符合格式
-    if not time_str or time not in tables.keys():
-        return jsonify({'error': 'Invalid table name'}), 400
-    
-    # 构造表名
-    table_name = app.config['SQL_TABLE_NAME_PREFIX'] + time
+@app.route('/api/db/<frontend_table_name>/info', methods=['GET'])
+def get_table_info(frontend_table_name):
+    # 根据前端表名查找后端表名
+    if frontend_table_name not in tables:
+        return jsonify({'error': 'Table not found'}), 404
+    backend_table_name = tables[frontend_table_name]['backend_table_name']
     
     # 检查表是否存在
     inspector = inspect(db.engine)
-    if not inspector.has_table(table_name):
+    if not inspector.has_table(backend_table_name):
         return jsonify({'error': 'Table not found'}), 404
     
     # 获取表的结构
     metadata = MetaData()
-    table = Table(table_name, metadata, autoload_with=db.engine)
+    table = Table(backend_table_name, metadata, autoload_with=db.engine)
     columns = [column.name for column in table.columns]
     
     # 获取表当前含有的记录数量
     with db.session() as session:
         num_records = session.query(table).count()
-
     return jsonify(dict([
-        ('table_name', table_name),
-        ('using', tables[time]['using']),
+        ('frontend_table_name', frontend_table_name),
+        ('backend_table_name', backend_table_name),
+        ('using', tables[frontend_table_name]['using']),
         ('columns', columns),
         ('num_records', num_records)
     ])), 200
 
-# API: Insert a record into HttpRequestLog table
-@app.route('/api/db/<table_name>/insert', methods=['POST'])
-def insert_record(table_name):
-    mesg, is_done, status_code, table_name, time = set_using(table_name)
+# API: Insert a record into HttpRequestLog table TODO
+@app.route('/api/db/<frontend_table_name>/insert', methods=['POST'])
+def insert_record(frontend_table_name):
+    mesg, is_done, status_code, _, backend_table_name = set_using(frontend_table_name)
 
     if not is_done:
         return jsonify(mesg), status_code
 
     # 检查输入是否符合格式
-    if not table_name or time not in tables.keys() or not tables[time]['using']:
+    if not backend_table_name or frontend_table_name not in tables.keys() or not tables[frontend_table_name]['using']:
         return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
-    
+
     # 如果不是 POST 请求直接抛错
     if request.content_type != 'application/json':
         return jsonify({'error': 'Content-Type must be application/json'}), 415
@@ -380,13 +353,13 @@ def insert_record(table_name):
     try:
         # 检查表是否存在
         inspector = inspect(db.engine)
-        if not inspector.has_table(table_name):
+        if not inspector.has_table(backend_table_name):
             return jsonify({'error': 'Table not found'}), 404
         
-        # 利用反射，获取表的结构
+        # 动态加载表实例
         metadata = MetaData()
-        table = Table(table_name, metadata, autoload_with=db.engine)
-        
+        table = Table(backend_table_name, metadata, autoload_with=db.engine)
+
         # 检查 time 的格式是否正确，如果不存在或者格式不正确，则使用当前时间
         time = data.get('time', None)
         if time is None or not is_valid_datetime_format(time):
@@ -422,26 +395,26 @@ def insert_record(table_name):
         return jsonify({'error': str(e)}), 500
 
 # API: 查询表中的记录
-@app.route('/api/db/<table_name>/select', methods=['GET'])
-def query_records(table_name):
-    mesg, is_done, status_code, table_name, time = set_using(table_name)
+@app.route('/api/db/<frontend_table_name>/select', methods=['GET'])
+def query_records(frontend_table_name):
+    mesg, is_done, status_code, _, backend_table_name = set_using(frontend_table_name)
 
     if not is_done:
         return jsonify(mesg), status_code
 
     # 检查输入是否符合格式
-    if not table_name or time not in tables.keys() or not tables[time]['using']:
+    if not backend_table_name or frontend_table_name not in tables.keys() or not tables[frontend_table_name]['using']:
         return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
 
     try:
         # 检查表是否存在
         inspector = inspect(db.engine)
-        if not inspector.has_table(table_name):
+        if not inspector.has_table(backend_table_name):
             return jsonify({'error': 'Table not found'}), 404
         
         # 动态加载表实例
         metadata = MetaData()
-        table = Table(table_name, metadata, autoload_with=db.engine)
+        table = Table(backend_table_name, metadata, autoload_with=db.engine)
 
         # 查询所有记录
         with db.session() as session:
@@ -467,7 +440,7 @@ def query_records(table_name):
         app.logger.error(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# API: 根据id删除表中的记录
+# API: 根据id删除表中的记录 TODO
 @app.route('/api/db/<table_name>/delete/<id>', methods=['GET'])
 def delete(table_name, id):
     mesg, is_done, status_code, table_name, time = set_using(table_name)
@@ -513,26 +486,26 @@ def delete(table_name, id):
         return jsonify({'error': str(e)}), 500
 
 # API: 清空表中的所有记录
-@app.route('/api/db/<table_name>/clean', methods=['GET'])
-def clean_table(table_name):
-    mesg, is_done, status_code, table_name, time = set_using(table_name)
+@app.route('/api/db/<frontend_table_name>/clean', methods=['GET'])
+def clean_table(frontend_table_name):
+    mesg, is_done, status_code, _, backend_table_name = set_using(frontend_table_name)
 
     if not is_done:
         return jsonify(mesg), status_code
 
     # 检查输入是否符合格式
-    if not table_name or time not in tables.keys() or not tables[time]['using']:
+    if not backend_table_name or frontend_table_name not in tables.keys() or not tables[frontend_table_name]['using']:
         return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
 
     try:
         # 检查表是否存在
         inspector = inspect(db.engine)
-        if not inspector.has_table(table_name):
+        if not inspector.has_table(backend_table_name):
             return jsonify({'error': 'Table not found'}), 404
         
         # 动态加载表实例
         metadata = MetaData()
-        table = Table(table_name, metadata, autoload_with=db.engine)
+        table = Table(backend_table_name, metadata, autoload_with=db.engine)
 
         # 删除所有记录
         with db.session() as session:
@@ -589,12 +562,12 @@ API:
 def select_table_mapping():
     try:
         # 查询所有的表名映射关系
-        table_mappings = TableMapping.query.all()
-        if not table_mappings:
+        table_mapper_records = TableMapper.query.all()
+        if not table_mapper_records:
             return jsonify({'status': '200', 'msg': 'No table mapping found'}), 200
         
         # 返回所有表名映射关系
-        return jsonify({'status': '200', 'msg': 'Table mapping found', 'table_mappings': [{'id': table_mapping.id, 'frontend_table_name': table_mapping.frontend_table_name, 'backend_table_name': table_mapping.backend_table_name, 'created_at': table_mapping.created_at.strftime('%Y-%m-%d %H:%M:%S')} for table_mapping in table_mappings]}), 200
+        return jsonify({'status': '200', 'msg': 'Table mapping found', 'table_mappings': [{'id': table_mapping.id, 'frontend_table_name': table_mapping.frontend_table_name, 'backend_table_name': table_mapping.backend_table_name, 'created_at': table_mapping.created_at.strftime('%Y-%m-%d %H:%M:%S')} for table_mapping in table_mapper_records]}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         # 记录并返回详细错误信息

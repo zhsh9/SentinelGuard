@@ -408,7 +408,7 @@ export default {
       }
     },
 
-    // 删除数据库（功能待实现）
+    // 删除数据库（功能待实现）TODO
     async deleteDB() {
       try {
         // TODO: delete database
