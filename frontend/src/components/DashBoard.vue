@@ -777,7 +777,6 @@ td span {
 .offcanvas-custom {
   width: 50%; /* 设置offcanvas的宽度 */
   height: 100%;
-  background-color: rgba(255, 255, 255, 1); /* 设置背景透明度 */
 }
 
 // Export svg styles
