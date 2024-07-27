@@ -93,7 +93,7 @@ export default {
     const timerStore = inject("timerStore");
     const interfaces = ref([]);
     const selectedInterfaces = ref([]);
-    const commonPorts = ref([80, 443, 8080, 3000]);
+    const commonPorts = ref(["all", 80, 443, 8080, 3000]);
     const availablePorts = ref([...commonPorts.value]);
     const selectedPorts = ref([]);
     const customPort = ref("");
@@ -158,16 +158,32 @@ export default {
 
     const startCapture = async () => {
       try {
-        const response = await axios.post("/api/sniffer/start", {
-          interface_list: selectedInterfaces.value,
-          port_list: selectedPorts.value,
-        });
+        let response;
+
+        // 如果没有选择接口或者选择了所有端口
+        if (
+          selectedInterfaces.value.length === 0 ||
+          "all" in selectedPorts.value
+        ) {
+          response = await axios.post("/api/sniffer/start", {
+            interface_list: selectedInterfaces.value,
+          });
+        } else {
+          // 选择了特定端口
+          response = await axios.post("/api/sniffer/start", {
+            interface_list: selectedInterfaces.value,
+            port_list: selectedPorts.value,
+          });
+        }
+
+        // 如果成功开始抓包
         if (response.data.status === "success") {
           store.dispatch("updateIsSniffing", true);
           timerStore.startTimer();
         }
         hideModal();
       } catch (error) {
+        // 如果抓包失败
         console.error("Error starting sniffer:", error);
       }
     };
