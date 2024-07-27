@@ -61,7 +61,7 @@
             <input
               type="text"
               class="form-control"
-              placeholder="Please input a valid custom port"
+              placeholder="Please input a valid custom port if needed"
               v-model="customPort"
             />
             <button
@@ -247,4 +247,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.select-title {
+  margin-top: 10px;
+  font-weight: bold;
+}
+</style>

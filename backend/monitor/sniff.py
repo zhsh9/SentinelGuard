@@ -1,9 +1,10 @@
-from scapy.all import sniff, IP, TCP, Raw, AsyncSniffer
+from scapy.all import sniff, IP, TCP, Raw, AsyncSniffer, wrpcap
 import requests
 import json
 import re
 import base64
 from datetime import datetime
+import time
 
 # 将项目根目录添加到 sys.path
 import sys, os
@@ -149,7 +150,31 @@ def stop_sniffing(sniffer: AsyncSniffer) -> bool:
 def analyse_pcap(filename: str, port_list=[]) -> None:
     filter_str = filter_generator(port_list)
     print(f"Analyzing sniffed data from file: {filename}")
-    AsyncSniffer(offline=filename, filter=filter_str, prn=process_packet, store=0)
+    
+    # 创建 AsyncSniffer 实例
+    sniffer = AsyncSniffer(offline=filename, filter=filter_str, prn=process_packet, store=0)
+    
+    # 开始嗅探（读取 pcap 文件）
+    sniffer.start()
+    # 等待完成
+    sniffer.join()
+    # 停止嗅探（实际上可能已经完成）
+    sniffer.stop()
 
 if __name__ == '__main__':
-    start_sniffing(None)
+    # 创建 AsyncSniffer 实例
+    sniffer = generate_sniffing()
+    sniffer.start()
+    time.sleep(10)
+    
+    # 停止嗅探
+    sniffer.stop()
+
+    # 获取捕获到的所有数据包
+    packets = sniffer.results
+
+    # 将捕获到的数据包写入 pcap 文件
+    pcap_file = 'captured_packets.pcap'
+    wrpcap(pcap_file, packets)
+
+    print(f"Captured packets saved to {pcap_file}")
