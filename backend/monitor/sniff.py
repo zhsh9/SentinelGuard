@@ -1,4 +1,4 @@
-from scapy.all import sniff, IP, TCP, Raw
+from scapy.all import sniff, IP, TCP, Raw, AsyncSniffer
 import requests
 import json
 import re
@@ -109,14 +109,54 @@ def extract_header_fields(headers):
 def filter_non_printable(text):
     return ''.join([c if c.isprintable() else '.' for c in text])
 
-def start_sniffing(interface: str, stop_event: Event): # type: ignore
-    print(f"Starting sniffing on interface: {interface}")
-    # sniff(iface=interface, filter="tcp port 80", prn=process_packet, store=0)
-    # sniff(iface=interface, filter="tcp", prn=process_packet, store=0)
-    def stop_filter(_):
+def filter_generator(port_list=[]):
+    if type(port_list) != list or len(port_list) == 0: # 不合法的输入，或者没有指定端口
+        return "tcp"
+    port_list = sorted([int(p) for p in port_list if str(p).isdigit()]) # 过滤掉非数字的端口
+    ret_filter = []
+    for port in port_list:
+        ret_filter.append(f"tcp port {port}")
+    return " or ".join(ret_filter)
+
+def start_sniffing(stop_event, interface_list=[], port_list=[]): # type: (list, Event, list) -> None
+    """
+    Start sniffing network traffic on the specified interface.
+
+    Args:
+        interface (str): The name of the network interface to sniff on.
+        stop_event (Event): An event object used to signal the sniffing process to stop.
+
+    Returns:
+        None
+    """
+    def stop_sniff():
+        # if stop_event is not None and stop_event.is_set():
         return stop_event.is_set()
+
+    # Generate the filter string based on the port list
+    filter_str = filter_generator(port_list)
     
-    sniff(iface=interface, filter="tcp", prn=process_packet, stop_filter=stop_filter, store=0)
+    if interface_list is None or len(interface_list) == 0:
+        interface = None
+    else:
+        interface = interface_list
+
+    print(f"Starting sniffing on interfaces: {interface}; fileter: {filter_str}")
+    sniff(iface=interface, filter=filter_str, prn=process_packet, stop_filter=stop_sniff, store=0)
+    # TODO: 创建 AsyncSniffer 实例 sniffer.start() 并启动嗅探, sniffer.stop() 时停止嗅探
+
+def analyse_pcap(filename: str) -> None:
+    """
+    Analyse the sniffed data from the pcap file.
+
+    Args:
+        filename (str): The name of the pcap file.
+
+    Returns:
+        None
+    """
+    print(f"Analyzing sniffed data from file: {filename}")
+    sniff(offline=filename, prn=process_packet, store=0)
 
 if __name__ == '__main__':
-    start_sniffing('eth0')
+    start_sniffing(None)
