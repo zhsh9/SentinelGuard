@@ -23,40 +23,40 @@
         class="dropdown-item"
         href="#"
         data-bs-toggle="modal"
-        data-bs-target="#createDBModal"
-        >Create Database</a
+        data-bs-target="#createTableModal"
+        >Create DB Table</a
       >
       <a
         class="dropdown-item"
         href="#"
         data-bs-toggle="modal"
-        data-bs-target="#switchDBModal"
-        >Switch Database</a
+        data-bs-target="#switchTableModal"
+        >Switch DB Table</a
       >
       <div class="dropdown-divider"></div>
       <a
         class="dropdown-item"
         href="#"
         data-bs-toggle="modal"
-        data-bs-target="#emptyDBModal"
-        >Empty Database</a
+        data-bs-target="#emptyTableModal"
+        >Empty DB Table</a
       >
       <a
         class="dropdown-item"
         href="#"
         data-bs-toggle="modal"
-        data-bs-target="#deleteDBModal"
-        >Delete Database</a
+        data-bs-target="#deleteTableModal"
+        >Delete DB Table</a
       >
     </div>
   </li>
 
   <!-- Database Modals -->
   <!-- Check Database Info Modal -->
+  <!-- data-bs-backdrop="static" -->
   <div
     class="modal fade"
     id="dbInfoModal"
-    data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
     aria-labelledby="dbInfoModalLabel"
@@ -92,17 +92,18 @@
   <!-- Create Database Modal -->
   <div
     class="modal fade"
-    id="createDBModal"
-    data-bs-backdrop="static"
+    id="createTableModal"
     data-bs-keyboard="false"
     tabindex="-1"
-    aria-labelledby="createDBModalLabel"
+    aria-labelledby="createTableModalLabel"
     aria-hidden="true"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="createDBModalLabel">Create Database</h5>
+          <h5 class="modal-title" id="createTableModalLabel">
+            Create Database
+          </h5>
           <button
             type="button"
             class="btn-close"
@@ -133,7 +134,7 @@
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="createDB"
+            @click="createTable"
           >
             Create
           </button>
@@ -145,17 +146,18 @@
   <!-- Switch Database Modal -->
   <div
     class="modal fade"
-    id="switchDBModal"
-    data-bs-backdrop="static"
+    id="switchTableModal"
     data-bs-keyboard="false"
     tabindex="-1"
-    aria-labelledby="switchDBModalLabel"
+    aria-labelledby="switchTableModalLabel"
     aria-hidden="true"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="switchDBModalLabel">Switch Database</h5>
+          <h5 class="modal-title" id="switchTableModalLabel">
+            Switch Database
+          </h5>
           <button
             type="button"
             class="btn-close"
@@ -191,7 +193,7 @@
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="switchDB"
+            @click="switchTable"
           >
             Switch
           </button>
@@ -203,17 +205,17 @@
   <!-- Empty Database Modal -->
   <div
     class="modal fade"
-    id="emptyDBModal"
+    id="emptyTableModal"
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
-    aria-labelledby="emptyDBModalLabel"
+    aria-labelledby="emptyTableModalLabel"
     aria-hidden="true"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title text-danger" id="emptyDBModalLabel">
+          <h5 class="modal-title text-danger" id="emptyTableModalLabel">
             Empty Database
           </h5>
           <button
@@ -242,7 +244,7 @@
             type="button"
             class="btn btn-danger"
             data-bs-dismiss="modal"
-            @click="emptyDB"
+            @click="emptyTable"
           >
             Empty
           </button>
@@ -254,17 +256,17 @@
   <!-- Delete Database Modal -->
   <div
     class="modal fade"
-    id="deleteDBModal"
+    id="deleteTableModal"
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
-    aria-labelledby="deleteDBModalLabel"
+    aria-labelledby="deleteTableModalLabel"
     aria-hidden="true"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title text-danger" id="deleteDBModalLabel">
+          <h5 class="modal-title text-danger" id="deleteTableModalLabel">
             Delete Database
           </h5>
           <button
@@ -293,7 +295,7 @@
             type="button"
             class="btn btn-danger"
             data-bs-dismiss="modal"
-            @click="deleteDB"
+            @click="deleteTable"
           >
             Delete
           </button>
@@ -307,6 +309,7 @@
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import { EventBus } from "@/eventBus";
+import { Modal } from "bootstrap";
 
 export default {
   name: "DataBase",
@@ -319,6 +322,12 @@ export default {
   },
   created() {
     this.fetchDBInfo(); // 组件创建时获取数据库信息
+  },
+  mounted() {
+    document.addEventListener("keydown", this.handleKeyDown);
+  },
+  beforeUnmount() {
+    document.removeEventListener("keydown", this.handleKeyDown);
   },
   computed: {
     ...mapGetters(["curDbPath"]), // 从 Vuex 获取当前数据库路径
@@ -344,7 +353,7 @@ export default {
     },
 
     // 创建新数据库
-    async createDB() {
+    async createTable() {
       try {
         const response = await axios.post("/api/db/create", {
           fontend_tablename: this.newDatabaseName,
@@ -360,7 +369,7 @@ export default {
           alert(response.data.message);
         }
       } catch (error) {
-        console.error("Error creating database:", error);
+        console.error("Error creating table:", error);
         if (error.response && error.response.status === 400) {
           // 提取并显示错误信息
           const errorMessage = error.response.data.error;
@@ -372,7 +381,7 @@ export default {
     },
 
     // 切换数据库
-    async switchDB() {
+    async switchTable() {
       try {
         const response = await axios.post("/api/db/use", {
           frontend_table_name: this.selectedDatabase[0],
@@ -389,8 +398,30 @@ export default {
       }
     },
 
+    // 处理键盘事件
+    async handleKeyDown(event) {
+      if (event.key === "Enter") {
+        const activeElement = document.activeElement;
+        if (activeElement.closest("#createTableModal")) {
+          this.createTable();
+          // 关闭 Modal
+          const modal = Modal.getInstance(
+            activeElement.closest("#createTableModal")
+          );
+          modal.hide();
+        } else if (activeElement.closest("#switchTableModal")) {
+          this.switchTable();
+          // 关闭 Modal
+          const modal = Modal.getInstance(
+            activeElement.closest("#switchTableModal")
+          );
+          modal.hide();
+        }
+      }
+    },
+
     // 清空数据库
-    async emptyDB() {
+    async emptyTable() {
       try {
         // TODO: empty database
         const response = await axios.get(`/api/db/${this.curDbPath}/clean`);
@@ -410,7 +441,7 @@ export default {
     },
 
     // 删除数据库（功能待实现）TODO
-    async deleteDB() {
+    async deleteTable() {
       try {
         // TODO: delete database
         // const response = await axios.post("/api/db/delete");

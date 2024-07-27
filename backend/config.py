@@ -45,9 +45,11 @@ class Config:
     TOKEN = []  # You can generate this dynamically if needed, and use is to check connection
 
     # ------------------------------- Database -------------------------------
-    SQL_DB_NAME = 'sentinel'
+    SQL_DB_NAMES = ['sentinel']
+    CUR_DB_INDEX = 0
+    CUR_DB_NAME = SQL_DB_NAMES[CUR_DB_INDEX]
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, f'{SQL_DB_NAME}.db')
+        'sqlite:///' + os.path.join(basedir, f'{CUR_DB_NAME}.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQL_CLASS_NAME_PREFIX = r'DynamicHttpRequestLog_'
     SQL_TABLE_NAME_PREFIX = r'dynamic_http_request_log_'
