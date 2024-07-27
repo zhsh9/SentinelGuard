@@ -169,6 +169,7 @@
           <div>
             <label for="dbSelect" class="form-label">Select Database</label>
             <select
+              multiple
               class="form-select"
               id="dbSelect"
               style="height: 300px"
@@ -312,7 +313,7 @@ export default {
   data() {
     return {
       newDatabaseName: "", // 新数据库名输入
-      selectedDatabase: "", // 选中的数据库
+      selectedDatabase: [], // 选中的数据库
       databases: [], // 数据库列表
     };
   },
@@ -374,7 +375,7 @@ export default {
     async switchDB() {
       try {
         const response = await axios.post("/api/db/use", {
-          frontend_table_name: this.selectedDatabase,
+          frontend_table_name: this.selectedDatabase[0],
         });
         // console.log("Switch database response:", response.data);
         if (response.data.status === "200") {
