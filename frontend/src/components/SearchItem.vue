@@ -1,9 +1,14 @@
 <template>
-  <form class="d-flex">
-    <input class="form-control me-sm-2" type="search" placeholder="Search" />
-    <button class="btn btn-warning my-2 my-sm-0 me-2" type="submit">
-      Search
-    </button>
+  <form class="d-flex" role="search">
+    <input
+      id="search"
+      name="search"
+      class="form-control me-2"
+      type="search"
+      placeholder="Search"
+      aria-label="Search"
+    />
+    <button class="btn btn-outline-success me-2" type="submit">Search</button>
   </form>
 </template>
 

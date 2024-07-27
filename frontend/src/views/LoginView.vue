@@ -116,10 +116,10 @@ export default {
       axios
         .post(path, post_body)
         .then((response) => {
-          console.log("Success login:", response);
+          // console.log("Success login:", response);
 
           if (response.data && response.data.token) {
-            console.log("Token:", response.data.token);
+            // console.log("Token:", response.data.token);
             store.commit("setToken", response.data.token); // 存储 token 到 Vuex
             localStorage.setItem("token", response.data.token); // 存储 token 到 localStorage
 

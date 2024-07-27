@@ -115,6 +115,7 @@
         <div class="modal-body">
           <input
             type="text"
+            id="newDatabaseName"
             class="form-control form-control-dark"
             v-model="newDatabaseName"
             placeholder="Enter database name"
@@ -168,7 +169,6 @@
           <div>
             <label for="dbSelect" class="form-label">Select Database</label>
             <select
-              multiple
               class="form-select"
               id="dbSelect"
               style="height: 300px"
@@ -331,12 +331,12 @@ export default {
         // 获取当前有哪些表
         const response = await axios.get("/api/db/info");
         this.databases = Object.keys(response.data.table_mapper);
-        console.log("Database info:", response.data);
+        // console.log("Database info:", response.data);
 
         // 获取当前正在使用的表名
         const response2 = await axios.get("/api/db/cur_db");
         this.updateCurDbPath(response2.data.table_name); // 更新 Vuex 中的 cur_db_path
-        console.log("Current database:", response2.data);
+        // console.log("Current database:", response2.data);
       } catch (error) {
         console.error("Error fetching database info:", error);
       }
@@ -348,7 +348,7 @@ export default {
         const response = await axios.post("/api/db/create", {
           fontend_tablename: this.newDatabaseName,
         });
-        console.log("Create database response:", response.data);
+        // console.log("Create database response:", response.data);
         if (
           response.data.status === "200" &&
           response.data.deplicated === false
@@ -376,7 +376,7 @@ export default {
         const response = await axios.post("/api/db/use", {
           frontend_table_name: this.selectedDatabase,
         });
-        console.log("Switch database response:", response.data);
+        // console.log("Switch database response:", response.data);
         if (response.data.status === "200") {
           // alert("Database switched successfully"); // 不使用alert 比较不美观
           await this.fetchDBInfo(); // 更新数据库信息
@@ -393,7 +393,7 @@ export default {
       try {
         // TODO: empty database
         const response = await axios.get(`/api/db/${this.curDbPath}/clean`);
-        console.log("Empty database response:", response.data);
+        // console.log("Empty database response:", response.data);
         if (response.data.status === "200") {
           // alert("Database emptied successfully");
           // 刷新页面

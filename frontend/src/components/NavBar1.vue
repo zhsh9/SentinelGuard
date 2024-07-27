@@ -29,17 +29,7 @@
           <UploadPcap />
           <RealtimeCapture />
         </ul>
-        <form class="d-flex" role="search">
-          <input
-            class="form-control me-2"
-            type="search"
-            placeholder="Search"
-            aria-label="Search"
-          />
-          <button class="btn btn-outline-success me-2" type="submit">
-            Search
-          </button>
-        </form>
+        <SearchItem />
         <LogOut />
       </div>
     </div>
@@ -52,6 +42,7 @@ import UploadPcap from "@/components/UploadPcap.vue";
 import RealtimeCapture from "@/components/RealtimeCapture.vue";
 // import SearchItem from "@/components/SearchItem.vue";
 import LogOut from "@/components/LogOut.vue";
+import SearchItem from "./SearchItem.vue";
 </script>
 
 <style lang="scss" scoped>

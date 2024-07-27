@@ -99,39 +99,11 @@
                 />
               </symbol>
               <symbol id="export" fill="currentColor" viewBox="0 0 24 24">
-                <polyline
-                  points="15 3 21 3 21 9"
-                  style="
-                    fill: none;
-                    stroke: currentColor;
-                    stroke-linecap: round;
-                    stroke-linejoin: round;
-                    stroke-width: 1.5;
-                  "
-                ></polyline>
+                <polyline points="15 3 21 3 21 9"></polyline>
                 <path
                   d="M21,13v7a1,1,0,0,1-1,1H4a1,1,0,0,1-1-1V4A1,1,0,0,1,4,3h7"
-                  style="
-                    fill: none;
-                    stroke: currentColor;
-                    stroke-linecap: round;
-                    stroke-linejoin: round;
-                    stroke-width: 1.5;
-                  "
                 ></path>
-                <line
-                  x1="11"
-                  y1="13"
-                  x2="21"
-                  y2="3"
-                  style="
-                    fill: none;
-                    stroke: currentColor;
-                    stroke-linecap: round;
-                    stroke-linejoin: round;
-                    stroke-width: 1.5;
-                  "
-                ></line>
+                <line x1="11" y1="13" x2="21" y2="3"></line>
               </symbol>
             </svg>
             <!-- Buttons -->
@@ -725,7 +697,8 @@ $column-widths: (
 );
 
 @function to-percentage($px) {
-  @return $px / $total-width * 100%; // math pkg problem
+  @return calc($px / $total-width) * 100%;
+  // @return math.div($px, $total-width); // has math pkg problem
 }
 
 table th,
@@ -805,5 +778,16 @@ td span {
   width: 50%; /* 设置offcanvas的宽度 */
   height: 100%;
   background-color: rgba(255, 255, 255, 1); /* 设置背景透明度 */
+}
+
+// Export svg styles
+#export polyline,
+#export path,
+#export line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
 }
 </style>

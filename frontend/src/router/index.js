@@ -24,8 +24,8 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const token = store.state.token;
-  console.log("Navigating to:", to.name);
-  console.log("Current token:", token);
+  // console.log("Navigating to:", to.name);
+  // console.log("Current token:", token);
 
   if (!token && to.name !== "login") {
     // 如果没有 token 且目标不是登录页面，则重定向到登录页面
@@ -36,7 +36,7 @@ router.beforeEach(async (to, from, next) => {
 
     try {
       const response = await axios.post(path, post_body);
-      console.log("API Response:", response.data);
+      // console.log("API Response:", response.data);
 
       if (response.data.status === "200") {
         if (to.name === "login") {
@@ -49,7 +49,7 @@ router.beforeEach(async (to, from, next) => {
         next({ name: "login" }); // 验证失败，重定向到登录页
       }
     } catch (error) {
-      console.error("Error verifying token:", error);
+      // console.error("Error verifying token:", error);
       store.commit("clearToken"); // 捕获错误时也清除 token
       next({ name: "login" }); // 重定向到登录页
     }
