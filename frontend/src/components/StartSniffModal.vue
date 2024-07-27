@@ -57,10 +57,20 @@
               {{ port }}
             </div>
           </div>
-          <div>
-            <label class="custom-port-label">Custom Port:</label>
-            <input type="text" v-model="customPort" />
-            <button @click="addCustomPort">Add</button>
+          <div class="input-group mt-2">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Please input a valid custom port"
+              v-model="customPort"
+            />
+            <button
+              class="btn btn-primary"
+              type="button"
+              @click="addCustomPort"
+            >
+              Add
+            </button>
           </div>
         </div>
         <div class="modal-footer">
@@ -135,6 +145,11 @@ export default {
     const addCustomPort = () => {
       const port = parseInt(customPort.value);
       if (port && !availablePorts.value.includes(port)) {
+        // 添加自定义端口，必须满足数字在 1-65535 之间，且不重复
+        if (port < 1 || port > 65535) {
+          alert("Please input a valid port number between 1 and 65535");
+          return;
+        }
         availablePorts.value.push(port);
         customPort.value = "";
       }
@@ -159,6 +174,12 @@ export default {
     const startCapture = async () => {
       try {
         let response;
+
+        // 如果当前没有正在使用的数据表，则直接停止
+        if (!store.state.curDbPath) {
+          alert("Please select a database first");
+          return;
+        }
 
         // 如果没有选择接口或者选择了所有端口
         if (
@@ -226,13 +247,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.custom-port-label {
-  margin-right: 10px;
-}
-
-.select-title {
-  margin-top: 10px;
-  margin-bottom: 5px;
-}
-</style>
+<style scoped></style>

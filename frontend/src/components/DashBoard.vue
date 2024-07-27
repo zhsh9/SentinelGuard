@@ -471,9 +471,15 @@ export default {
     // 获取选中数据库表的数据
     async fetchTableData(database) {
       try {
-        if (!database) {
+        if (!database && this.curDbPath && this.curDbPath.length > 0) {
           database = this.curDbPath;
         }
+
+        if (database === undefined) {
+          console.error("Database not specified and curDbPath is empty");
+          return;
+        }
+
         const response = await axios.get(`/api/db/${database}/select`);
         this.tableData = response.data.data;
         // console.log("tableData", this.tableData);
