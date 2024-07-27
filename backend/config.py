@@ -58,8 +58,8 @@ class Config:
     USING_TABLE = ''
     
     # ------------------------------- Data Collection -------------------------------
-    IS_SNIFFING = None
-    SNIFFING_PROCESS = None
+    IS_SNIFFING = False
+    SNIFFER = None
 
 
 # Test Config Class

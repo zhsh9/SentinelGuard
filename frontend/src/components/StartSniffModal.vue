@@ -10,7 +10,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="startCaptureModalLabel">
-            Start Capturing
+            Start Capturing HTTP Traffic
           </h5>
           <button
             type="button"
@@ -23,8 +23,9 @@
           <p class="text-danger">
             Are you sure to start capturing http traffic?
           </p>
-          <p class="text-warning bolder">
-            Current status: {{ isSniffing ? "Sniffing" : "Not Sniffing" }}
+          <p class="text-warning">
+            Current status:
+            <strong>{{ isSniffing ? "Sniffing" : "Not Sniffing" }}</strong>
           </p>
           <div>
             <h5 class="select-title">Select Interfaces:</h5>
@@ -81,7 +82,7 @@
 
 <script>
 import axios from "axios";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, inject } from "vue";
 import { useStore } from "vuex";
 import { Modal } from "bootstrap";
 
@@ -89,6 +90,7 @@ export default {
   name: "StartSniffModal",
   setup() {
     const store = useStore(); // 使用 Vuex
+    const timerStore = inject("timerStore");
     const interfaces = ref([]);
     const selectedInterfaces = ref([]);
     const commonPorts = ref([80, 443, 8080, 3000]);
@@ -162,6 +164,7 @@ export default {
         });
         if (response.data.status === "success") {
           store.dispatch("updateIsSniffing", true);
+          timerStore.startTimer();
         }
         hideModal();
       } catch (error) {

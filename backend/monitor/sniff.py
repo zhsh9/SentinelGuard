@@ -4,7 +4,6 @@ import json
 import re
 import base64
 from datetime import datetime
-from multiprocessing import Event
 
 # 将项目根目录添加到 sys.path
 import sys, os
@@ -118,45 +117,39 @@ def filter_generator(port_list=[]):
         ret_filter.append(f"tcp port {port}")
     return " or ".join(ret_filter)
 
-def start_sniffing(stop_event, interface_list=[], port_list=[]): # type: (list, Event, list) -> None
-    """
-    Start sniffing network traffic on the specified interface.
-
-    Args:
-        interface (str): The name of the network interface to sniff on.
-        stop_event (Event): An event object used to signal the sniffing process to stop.
-
-    Returns:
-        None
-    """
-    def stop_sniff():
-        # if stop_event is not None and stop_event.is_set():
-        return stop_event.is_set()
-
+def generate_sniffing(interface_list=[], port_list=[]) -> AsyncSniffer:
     # Generate the filter string based on the port list
     filter_str = filter_generator(port_list)
     
-    if interface_list is None or len(interface_list) == 0:
+    if len(interface_list) == 0:
         interface = None
     else:
         interface = interface_list
 
-    print(f"Starting sniffing on interfaces: {interface}; fileter: {filter_str}")
-    sniff(iface=interface, filter=filter_str, prn=process_packet, stop_filter=stop_sniff, store=0)
-    # TODO: 创建 AsyncSniffer 实例 sniffer.start() 并启动嗅探, sniffer.stop() 时停止嗅探
+    # print(f"Starting sniffing on interfaces: {interface}; fileter: {filter_str}")
+    return AsyncSniffer(iface=interface, filter=filter_str, prn=process_packet, store=0)
+    # sniff(iface=interface, filter=filter_str, prn=process_packet, stop_filter=stop_sniff, store=0) # old version
 
-def analyse_pcap(filename: str) -> None:
-    """
-    Analyse the sniffed data from the pcap file.
+def start_sniffing(sniffer: AsyncSniffer) -> bool:
+    try:
+        sniffer.start()
+        return True
+    except Exception as e:
+        logger.error('Error: %s', e)
+        return False
 
-    Args:
-        filename (str): The name of the pcap file.
+def stop_sniffing(sniffer: AsyncSniffer) -> bool:
+    try:
+        sniffer.stop()
+        return True
+    except Exception as e:
+        logger.error('Error: %s', e)
+        return False
 
-    Returns:
-        None
-    """
+def analyse_pcap(filename: str, port_list=[]) -> None:
+    filter_str = filter_generator(port_list)
     print(f"Analyzing sniffed data from file: {filename}")
-    sniff(offline=filename, prn=process_packet, store=0)
+    AsyncSniffer(offline=filename, filter=filter_str, prn=process_packet, store=0)
 
 if __name__ == '__main__':
     start_sniffing(None)

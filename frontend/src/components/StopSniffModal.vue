@@ -12,7 +12,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="stopCaptureModalLabel">
-            Logout Confirmation
+            Stop Capturing HTTP Traffic
           </h5>
           <button
             type="button"
@@ -22,10 +22,12 @@
           ></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure to stop capturing http traffic?</p>
-          <p>
-            Current status: <span v-if="isSniffing">Sniffing</span
-            ><span v-else>Not Sniffing</span>
+          <p class="text-danger">
+            Are you sure to stop capturing http traffic?
+          </p>
+          <p class="text-warning">
+            Current status:
+            <strong>{{ isSniffing ? "Sniffing" : "Not Sniffing" }}</strong>
           </p>
         </div>
         <div class="modal-footer">
