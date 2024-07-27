@@ -241,63 +241,20 @@
               </tr>
             </tbody>
           </table>
-          <!-- offcanvas for record update -->
-          <div
-            class="offcanvas offcanvas-end offcanvas-custom"
-            data-bs-scroll="true"
-            tabindex="-1"
-            id="recordOffcanvas"
-            aria-labelledby="recordOffcanvasLabel"
-            data-bs-backdrop="false"
-          >
-            <div class="offcanvas-header">
-              <h5 class="offcanvas-title" id="recordOffcanvasLabel">
-                Record Details
-              </h5>
-              <button
-                type="button"
-                class="btn-close text-reset"
-                data-bs-dismiss="offcanvas"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="offcanvas-body">
-              <p><strong>ID:</strong> {{ currentEntry.id }}</p>
-              <p><strong>Category:</strong> {{ currentEntry.category }}</p>
-              <p><strong>Source IP:</strong> {{ currentEntry.source_ip }}</p>
-              <p>
-                <strong>Source Port:</strong> {{ currentEntry.source_port }}
-              </p>
-              <p>
-                <strong>Destination IP:</strong>
-                {{ currentEntry.destination_ip }}
-              </p>
-              <p>
-                <strong>Destination Port:</strong>
-                {{ currentEntry.destination_port }}
-              </p>
-              <p><strong>Time:</strong> {{ currentEntry.time }}</p>
-              <p><strong>Method:</strong> {{ currentEntry.request_method }}</p>
-              <p>
-                <strong>Request URI:</strong> {{ currentEntry.request_uri }}
-              </p>
-              <p><strong>Version:</strong> {{ currentEntry.http_version }}</p>
-              <p><strong>Header:</strong> {{ currentEntry.header_fields }}</p>
-              <p><strong>Body:</strong> {{ currentEntry.request_body }}</p>
-            </div>
-          </div>
         </div>
       </main>
+      <!-- Include the HttpOffcanvas component -->
+      <HttpOffcanvas />
     </div>
   </div>
 </template>
 
-<script>
-import "bootstrap/dist/js/bootstrap.js";
+<script setup>
 import axios from "axios";
-import { computed, inject } from "vue";
-import { mapGetters } from "vuex";
+import { ref, computed, inject, onMounted, onBeforeUnmount, watch } from "vue";
+import { useStore } from "vuex";
 import { EventBus } from "@/eventBus";
+import HttpOffcanvas from "./HttpOffcanvas.vue";
 
 // 类别映射
 const categoryMap = {
@@ -333,266 +290,247 @@ const dangerCategories = [
   "XSS (Stored)",
 ];
 
-export default {
-  name: "DashBoard",
-  setup() {
-    // 从依赖注入中获取 timerStore
-    const timerStore = inject("timerStore");
+// 从依赖注入中获取 timerStore
+const timerStore = inject("timerStore");
 
-    // 计算属性：格式化时间
-    const formattedTime = computed(() => {
-      const minutes = Math.floor(timerStore.time.value / 60);
-      const seconds = timerStore.time.value % 60;
-      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    });
+// 计算属性：格式化时间
+const formattedTime = computed(() => {
+  const minutes = Math.floor(timerStore.time.value / 60);
+  const seconds = timerStore.time.value % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+});
 
-    // 方法：分享 URL
-    const shareUrl = async () => {
-      const url = window.location.href;
+// 方法：分享 URL
+const shareUrl = async () => {
+  const url = window.location.href;
 
-      // 使用 Clipboard API
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        try {
-          await navigator.clipboard.writeText(url);
-          // showPopover("success");
-          // alert("URL copied to clipboard");
-          return;
-        } catch (err) {
-          console.error("Failed to copy using Clipboard API: ", err);
-        }
-      }
-
-      // 回退到 document.execCommand 方法
-      const textArea = document.createElement("textarea");
-      textArea.value = url;
-      textArea.style.position = "fixed"; // 避免滚动到页面底部
-      textArea.style.opacity = "0"; // 隐藏文本区域
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-          // showPopover("success");
-          // alert("URL copied to clipboard");
-        } else {
-          console.error("Fallback: Unable to copy");
-          // showPopover("error");
-          alert("Error copying URL");
-        }
-      } catch (err) {
-        console.error("Fallback: Error copying URL: ", err);
-        // showPopover("error");
-        alert("Error copying URL");
-      }
-
-      document.body.removeChild(textArea);
-    };
-
-    // 返回 setup 中的属性和方法
-    return {
-      formattedTime,
-      shareUrl,
-    };
-  },
-  data() {
-    return {
-      // 表格数据
-      tableData: [],
-      // 统计数据
-      totalPackets: 0,
-      totalThreats: 0,
-      selectedCategories: [], // 存储选中的类别数组
-      configedCategories: 0, // 配置的攻击类别数
-      categoryCounts: {
-        "Normal Packets": 0,
-        "Insecure IPs": 0,
-        "Insecure Referers": 0,
-        CVEs: 0,
-        "Brute Force": 0,
-        "Command Injection": 0,
-        CSRF: 0,
-        "File Inclusion": 0,
-        "File Upload": 0,
-        "Insecure CAPTCHA": 0,
-        "SQL Injection": 0,
-        "SQL Injection (Blind)": 0,
-        "XSS (Reflected)": 0,
-        "XSS (Stored)": 0,
-      },
-      intervalId: null, // 定时器 ID
-      currentEntry: {}, // 当前选中的网络记录
-    };
-  },
-  created() {
-    // 在组件创建时获取初始数据（如果 curDbPath 已经有值）
-    if (this.curDbPath) {
-      this.fetchTableData(this.curDbPath);
+  // 使用 Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(url);
+      return;
+    } catch (err) {
+      console.error("Failed to copy using Clipboard API: ", err);
     }
-    // 监听事件总线的事件
-    EventBus.on("fetchTableData", this.fetchTableData);
-    // 计算有多少种类的攻击
-    this.configedCategories = Object.keys(this.categoryCounts).length;
-  },
-  beforeUnmount() {
-    // 移除事件监听器
-    EventBus.off("fetchTableData", this.fetchTableData);
-  },
-  computed: {
-    ...mapGetters(["curDbPath", "isSniffing"]),
-    filteredTableData() {
-      // console.log("selectedCategories:", this.selectedCategories);
-      if (this.selectedCategories.length === 0) {
-        return this.tableData;
-      }
-      return this.tableData.filter((entry) =>
-        this.selectedCategories.includes(categoryMap[entry.category])
-      );
-    },
-  },
-  watch: {
-    // 监听 cur_db_path 的变化
-    curDbPath(newDbPath) {
-      if (newDbPath) {
-        this.fetchTableData(newDbPath);
-      }
-    },
-    // 监听 isSniffing 状态的变化
-    isSniffing(newVal) {
-      if (newVal) {
-        this.startFetchingData();
-      } else {
-        this.stopFetchingData();
-      }
-    },
-  },
-  methods: {
-    // 获取选中数据库表的数据
-    async fetchTableData(database) {
-      try {
-        if (!database && this.curDbPath && this.curDbPath.length > 0) {
-          database = this.curDbPath;
-        }
+  }
 
-        if (database === undefined) {
-          console.error("Database not specified and curDbPath is empty");
-          return;
-        }
+  // 回退到 document.execCommand 方法
+  const textArea = document.createElement("textarea");
+  textArea.value = url;
+  textArea.style.position = "fixed"; // 避免滚动到页面底部
+  textArea.style.opacity = "0"; // 隐藏文本区域
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
 
-        const response = await axios.get(`/api/db/${database}/select`);
-        this.tableData = response.data.data;
-        // console.log("tableData", this.tableData);
-        this.updateCategoryCounts();
-      } catch (error) {
-        console.error("Error fetching table data:", error);
-      }
-    },
-    // 开始定时获取数据
-    startFetchingData() {
-      this.intervalId = setInterval(this.fetchTableData, 1000);
-    },
-    // 停止定时获取数据
-    stopFetchingData() {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    },
-    updateCategoryCounts() {
-      // Reset counts
-      this.totalPackets = this.tableData.length;
-      this.totalThreats = 0;
-      for (const category in this.categoryCounts) {
-        this.categoryCounts[category] = 0;
-      }
+  try {
+    const successful = document.execCommand("copy");
+    if (successful) {
+      // alert("URL copied to clipboard");
+    } else {
+      console.error("Fallback: Unable to copy");
+      alert("Error copying URL");
+    }
+  } catch (err) {
+    console.error("Fallback: Error copying URL: ", err);
+    alert("Error copying URL");
+  }
 
-      // Update counts based on tableData
-      this.tableData.forEach((item) => {
-        const category = categoryMap[item.category];
-        if (
-          category &&
-          Object.prototype.hasOwnProperty.call(this.categoryCounts, category)
-        ) {
-          this.categoryCounts[category]++;
-          if (category !== "Normal Packets") {
-            this.totalThreats++;
-          }
-        }
-      });
-    },
-    toggleCategorySelection(category) {
-      const index = this.selectedCategories.indexOf(category);
-      if (index > -1) {
-        this.selectedCategories.splice(index, 1);
-      } else {
-        this.selectedCategories.push(category);
-      }
-    },
-    getCategoryClass(category) {
-      let className =
-        "list-group-item d-flex justify-content-between align-items-center";
-      if (warningCategories.includes(category)) {
-        className += " list-group-item-warning";
-      } else if (dangerCategories.includes(category)) {
-        className += " list-group-item-danger";
-      } else {
-        className += " list-group-item-primary";
-      }
-      if (this.selectedCategories.includes(category)) {
-        className += " active";
-      }
-      return className;
-    },
-    getCategoryBadgeClass(category) {
-      let className = "badge rounded-pill";
-      if (warningCategories.includes(category)) {
-        className += " bg-warning";
-      } else if (dangerCategories.includes(category)) {
-        className += " bg-danger";
-      } else {
-        className += " bg-primary";
-      }
-      return className;
-    },
-    getCategoryEntryClass(category) {
-      const normalCategories = [-1, 0];
-      const warningCategories = [1, 2, 3];
-      const dangerCategories = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-
-      const numericCategory = Number(category);
-
-      // console.log(
-      //   "Category: ",
-      //   numericCategory,
-      //   normalCategories.includes(numericCategory),
-      //   warningCategories.includes(numericCategory),
-      //   dangerCategories.includes(numericCategory)
-      // );
-
-      if (normalCategories.includes(numericCategory)) {
-        return "badge rounded-pill bg-primary";
-      } else if (warningCategories.includes(numericCategory)) {
-        return "badge rounded-pill bg-warning";
-      } else if (dangerCategories.includes(numericCategory)) {
-        return "badge rounded-pill bg-danger";
-      } else {
-        return "";
-      }
-    },
-    mounted() {
-      // 初始加载时检查 isSniffing 状态
-      if (this.isSniffing) {
-        this.startFetchingData();
-      }
-    },
-    beforeUnmount() {
-      // 在组件销毁时清除定时器
-      this.stopFetchingData();
-    },
-    setCurrentEntry(entry) {
-      this.currentEntry = entry;
-    },
-  },
+  document.body.removeChild(textArea);
 };
+
+// 使用 store
+const store = useStore();
+
+// 表格数据
+const tableData = ref([]);
+// 统计数据
+const totalPackets = ref(0);
+const totalThreats = ref(0);
+const selectedCategories = ref([]); // 存储选中的类别数组
+const configedCategories = ref(0); // 配置的攻击类别数
+const categoryCounts = ref({
+  "Normal Packets": 0,
+  "Insecure IPs": 0,
+  "Insecure Referers": 0,
+  CVEs: 0,
+  "Brute Force": 0,
+  "Command Injection": 0,
+  CSRF: 0,
+  "File Inclusion": 0,
+  "File Upload": 0,
+  "Insecure CAPTCHA": 0,
+  "SQL Injection": 0,
+  "SQL Injection (Blind)": 0,
+  "XSS (Reflected)": 0,
+  "XSS (Stored)": 0,
+});
+const intervalId = ref(null); // 定时器 ID
+
+const curDbPath = computed(() => store.getters.curDbPath);
+const isSniffing = computed(() => store.getters.isSniffing);
+
+const filteredTableData = computed(() => {
+  if (selectedCategories.value.length === 0) {
+    return tableData.value;
+  }
+  return tableData.value.filter((entry) =>
+    selectedCategories.value.includes(categoryMap[entry.category])
+  );
+});
+
+// 获取选中数据库表的数据
+const fetchTableData = async (database) => {
+  try {
+    if (!database && curDbPath.value && curDbPath.value.length > 0) {
+      database = curDbPath.value;
+    }
+
+    if (database === undefined) {
+      console.error("Database not specified and curDbPath is empty");
+      return;
+    }
+
+    const response = await axios.get(`/api/db/${database}/select`);
+    tableData.value = response.data.data;
+    updateCategoryCounts();
+  } catch (error) {
+    console.error("Error fetching table data:", error);
+  }
+};
+
+// 开始定时获取数据
+const startFetchingData = () => {
+  intervalId.value = setInterval(fetchTableData, 1000);
+};
+
+// 停止定时获取数据
+const stopFetchingData = () => {
+  clearInterval(intervalId.value);
+  intervalId.value = null;
+};
+
+const updateCategoryCounts = () => {
+  // Reset counts
+  totalPackets.value = tableData.value.length;
+  totalThreats.value = 0;
+  for (const category in categoryCounts.value) {
+    categoryCounts.value[category] = 0;
+  }
+
+  // Update counts based on tableData
+  tableData.value.forEach((item) => {
+    const category = categoryMap[item.category];
+    if (
+      category &&
+      Object.prototype.hasOwnProperty.call(categoryCounts.value, category)
+    ) {
+      categoryCounts.value[category]++;
+      if (category !== "Normal Packets") {
+        totalThreats.value++;
+      }
+    }
+  });
+};
+
+const toggleCategorySelection = (category) => {
+  const index = selectedCategories.value.indexOf(category);
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1);
+  } else {
+    selectedCategories.value.push(category);
+  }
+};
+
+const getCategoryClass = (category) => {
+  let className =
+    "list-group-item d-flex justify-content-between align-items-center";
+  if (warningCategories.includes(category)) {
+    className += " list-group-item-warning";
+  } else if (dangerCategories.includes(category)) {
+    className += " list-group-item-danger";
+  } else {
+    className += " list-group-item-primary";
+  }
+  if (selectedCategories.value.includes(category)) {
+    className += " active";
+  }
+  return className;
+};
+
+const getCategoryBadgeClass = (category) => {
+  let className = "badge rounded-pill";
+  if (warningCategories.includes(category)) {
+    className += " bg-warning";
+  } else if (dangerCategories.includes(category)) {
+    className += " bg-danger";
+  } else {
+    className += " bg-primary";
+  }
+  return className;
+};
+
+const getCategoryEntryClass = (category) => {
+  const normalCategories = [-1, 0];
+  const warningCategories = [1, 2, 3];
+  const dangerCategories = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+  const numericCategory = Number(category);
+
+  if (normalCategories.includes(numericCategory)) {
+    return "badge rounded-pill bg-primary";
+  } else if (warningCategories.includes(numericCategory)) {
+    return "badge rounded-pill bg-warning";
+  } else if (dangerCategories.includes(numericCategory)) {
+    return "badge rounded-pill bg-danger";
+  } else {
+    return "";
+  }
+};
+
+const setCurrentEntry = (entry) => {
+  // console.log("Setting current entry: ", entry);
+  store.dispatch("updateCurrentEntry", entry);
+};
+
+// 在组件创建时获取初始数据（如果 curDbPath 已经有值）
+onMounted(() => {
+  if (curDbPath.value) {
+    fetchTableData(curDbPath.value);
+  }
+
+  // 监听事件总线的事件
+  EventBus.on("fetchTableData", fetchTableData);
+
+  // 计算有多少种类的攻击
+  configedCategories.value = Object.keys(categoryCounts.value).length;
+
+  // 初始加载时检查 isSniffing 状态
+  if (isSniffing.value) {
+    startFetchingData();
+  }
+});
+
+// 移除事件监听器
+onBeforeUnmount(() => {
+  EventBus.off("fetchTableData", fetchTableData);
+  stopFetchingData();
+});
+
+// 监听 curDbPath 和 isSniffing 的变化
+watch(curDbPath, (newDbPath) => {
+  if (newDbPath) {
+    fetchTableData(newDbPath);
+  }
+});
+
+watch(isSniffing, (newVal) => {
+  if (newVal) {
+    startFetchingData();
+  } else {
+    stopFetchingData();
+  }
+});
 </script>
 
 <style lang="scss" scoped>
