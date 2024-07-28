@@ -51,8 +51,10 @@
 <script setup>
 import { ref } from "vue";
 import { Modal } from "bootstrap";
+import { useStore } from "vuex"; // 使用 Vuex
 
 const selectedFile = ref(null);
+const store = useStore();
 
 const handleFileChange = (event) => {
   selectedFile.value = event.target.files[0];
@@ -140,7 +142,9 @@ const uploadFile = async () => {
     if (response.ok) {
       alert("File uploaded successfully!");
       // 处理上传成功的逻辑
-      closeModal();
+      store.dispatch("updateIsSniffing", true);
+      // 等待 1 秒后关闭模态框
+      setTimeout(closeModal, 1000);
     } else {
       alert("File upload failed.");
       // 处理上传失败的逻辑
@@ -158,6 +162,14 @@ const closeModal = () => {
   const modalInstance =
     Modal.getInstance(modalElement) || new Modal(modalElement);
   modalInstance.hide();
+  // 1秒后设置 Dashboard 不继续从数据库中读取数据
+  setTimeout(() => {
+    stopSniffing();
+  }, 1000);
+};
+
+const stopSniffing = () => {
+  store.dispatch("clearIsSniffing");
 };
 </script>
 

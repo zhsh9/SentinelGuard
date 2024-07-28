@@ -193,10 +193,10 @@ def analyse_pcap(filename: str, port_list=[]) -> None:
     
     # 开始嗅探（读取 pcap 文件）
     sniffer.start()
+    logger.info("Analyzing pcap file...")
     # 等待完成
     sniffer.join()
-    # 停止嗅探（实际上可能已经完成）
-    sniffer.stop()
+    logger.info("Analysis completed.")
 
 if __name__ == '__main__':
     # 创建 AsyncSniffer 实例

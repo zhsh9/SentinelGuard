@@ -9,7 +9,7 @@ from flask import Flask, request, jsonify
 from multiprocessing import Process, Event
 import time
 from app import app
-from monitor.sniff import generate_sniffing, start_sniffing, stop_sniffing
+from monitor.sniff import generate_sniffing, start_sniffing, stop_sniffing, analyse_pcap
 import monitor.interface as interface
 from copy import deepcopy
 import gc
@@ -83,6 +83,9 @@ def upload_pcap():
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
-        # 保存文件或进行分析
-        file.save(f"{app.config['PCAP_SAVE_DIR']}/{file.filename}")
-        return jsonify({'success': 'File uploaded successfully!'}), 200
+        # 保存文件并进行分析
+        filename = f"{app.config['PCAP_SAVE_DIR']}/{file.filename}"
+        file.save(filename)
+        analyse_pcap(filename)
+        
+        return jsonify({'success': 'File uploaded and analysed successfully!'}), 200
