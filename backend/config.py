@@ -2,6 +2,7 @@
 import hashlib
 import os
 import logging
+from scapy.all import AsyncSniffer
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -60,8 +61,11 @@ class Config:
     USING_TABLE = ''
     
     # ------------------------------- Data Collection -------------------------------
-    IS_SNIFFING = False
-    SNIFFER = None
+    SNIFFER:AsyncSniffer = None
+    PCAP_SAVE_DIR_NAME = 'monitor/pcap'
+    # 如果文件夹不存在则创建
+    PCAP_SAVE_DIR = os.path.join(os.path.dirname(__file__), PCAP_SAVE_DIR_NAME)
+    os.makedirs(PCAP_SAVE_DIR, exist_ok=True)
 
 
 # Test Config Class

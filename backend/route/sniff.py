@@ -17,11 +17,10 @@ import gc
 
 @app.route('/api/sniffer/start', methods=['POST'])
 def start_sniffer():
-    is_sniffing = app.config['IS_SNIFFING']
     sniffer = app.config['SNIFFER']
     
     # Sniffer is already running
-    if is_sniffing and sniffer is not None:
+    if sniffer is not None and sniffer.running:
         return jsonify({'status': 'error', 'message': 'Sniffer is already running'}), 400
     
     # Retrieve the interface and port list from the request
@@ -29,7 +28,6 @@ def start_sniffer():
     port_list = deepcopy(request.json.get('port_list', []))
     
     # Generate and start the sniffer
-    is_sniffing = app.config['IS_SNIFFING'] = True
     sniffer = app.config['SNIFFER'] = generate_sniffing(interface_list, port_list)
     is_done = start_sniffing(sniffer)
 
@@ -41,11 +39,10 @@ def start_sniffer():
 
 @app.route('/api/sniffer/stop', methods=['POST'])
 def stop_sniffer():
-    is_sniffing = app.config['IS_SNIFFING']
     sniffer = app.config['SNIFFER']
     
     # Sniffer is not running
-    if not is_sniffing or sniffer is None:
+    if sniffer is None or not sniffer.running:
         return jsonify({'status': 'error', 'message': 'Sniffer is not running'}), 400
 
     # Stop the sniffer
@@ -56,7 +53,6 @@ def stop_sniffer():
         gc.collect()
         
         # Update the shared variables
-        is_sniffing = app.config['IS_SNIFFING'] = False
         sniffer = app.config['SNIFFER'] = None
         return jsonify({'status': 'success', 'message': 'Sniffer stopped'}), 200
     else:
@@ -64,11 +60,10 @@ def stop_sniffer():
 
 @app.route('/api/sniffer/status', methods=['GET'])
 def sniffer_status():
-    is_sniffing = app.config['IS_SNIFFING']
     sniffer = app.config['SNIFFER']
 
     # 展示是否在嗅探
-    if is_sniffing and sniffer is not None:
+    if sniffer is not None and sniffer.running:
         return jsonify({'sniffing': True}), 200
     else:
         return jsonify({'sniffing': False}), 200
@@ -77,3 +72,17 @@ def sniffer_status():
 def get_interfaces():
     interfaces: list = interface.get_alive_interface()
     return jsonify(interfaces), 200
+
+@app.route('/api/upload-pcap', methods=['POST'])
+def upload_pcap():
+    if 'pcapFile' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['pcapFile']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file:
+        # 保存文件或进行分析
+        file.save(f"{app.config['PCAP_SAVE_DIR']}/{file.filename}")
+        return jsonify({'success': 'File uploaded successfully!'}), 200
