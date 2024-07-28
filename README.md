@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./frontend/src/assets/logo-font2.png" alt="logo" style="width:300px; height: auto">
+<img src="./frontend/src/assets/logo-font2.png" alt="logo" style="width:300px; height: auto">
 </p>
 <p align="center"><i>An Integrated Real-time HTTP Intrusion Detection System.</i></p>
 <div align="center">
@@ -13,8 +13,7 @@
 
 ## Installation
 
-- Flask3, Flask-SQLAlchemy, Scapy
-- Vue3, Bootstrap 5.3.3, Popper 2.11.8
+- Flask3, Vue3, Bootstrap 5.3.3
 
 ```bash
 cd frontend; yarn install
@@ -33,3 +32,32 @@ python backend/app.py
 cd frontend; npm run serve
 cd frontend; yarn serve
 ```
+
+## Screenshot
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="./static/login.jpeg" alt="Login Page" style="max-height: 300px; width: auto;" />
+      <p>Login Page</p>
+    </td>
+    <td align="center">
+      <img src="./static/upload.jpeg" alt="Upload Page" style="max-height: 300px; width: auto;" />
+      <p>Upload Page</p>
+    </td>
+    <td align="center">
+      <img src="./static/sniff.jpeg" alt="Sniff Page" style="max-height: 300px; width: auto;" />
+      <p>Sniff Page</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./static/dashboard_light.png" alt="Dashboard Light Theme" style="max-height: 300px; width: auto;" />
+      <p>Dashboard Light Theme</p>
+    </td>
+    <td align="center">
+      <img src="./static/dashboard_dark.png" alt="Dashboard Dark Theme" style="max-height: 300px; width: auto;" />
+      <p>Dashboard Dark Theme</p>
+    </td>
+  </tr>
+</table>
