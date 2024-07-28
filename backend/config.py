@@ -8,6 +8,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     # ------------------------------- Log -------------------------------
+    # Development mode
+    DEV = True
+    
+    # ------------------------------- Log -------------------------------
     # log save path
     LOG_FILE = os.path.join(basedir, 'app.log')
     # Logger

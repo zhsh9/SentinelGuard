@@ -18,7 +18,10 @@ def create_app():
 app = create_app()
 # Used to initialize the SQLAlchemy object and bind it to the Flask application instance.
 db = SQLAlchemy(app)
+# --------------------------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------------------------
 # Release mode.
 # CORS(app, resources={r'/*': {
 #     'origins': 'http://127.0.0.1:8000',
@@ -28,10 +31,26 @@ db = SQLAlchemy(app)
 CORS(app, resources={r'/*': {'origins': '*'}})
 # --------------------------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------------------------
 # Home page: hello world
 @app.route('/', methods=['GET'])
-def index():
-    return "Hello world!!! I'm zhsh aka qwe."
+def list_apis():
+    # List all the available APIs
+    routes = []
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint != 'static':
+            methods = ','.join(sorted(rule.methods))
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': methods,
+                'url': str(rule)
+            })
+
+    return jsonify({
+        'APIs': routes
+    })
+# --------------------------------------------------------------------------------------
 
 
 # --------------------------------------------------------------------------------------
@@ -56,10 +75,17 @@ from route.sniff import *
 # --------------------------------------------------------------------------------------
 # Flask Application Executing:
 if __name__ == '__main__':
-    app.run(
-        host='0.0.0.0',  # '127.0.0.1'
-        port=8001,
-        debug=True,
-        processes=True,
-        threaded=True,
-    )
+    run_params = {
+        'host': None,
+        'port': 8001,
+        'debug': True,
+        'processes': True,
+        'threaded': True,
+    }
+    if app.config['DEV']:
+        run_params['host'] = '0.0.0.0'
+    else:
+        run_params['host'] = '127.0.0.1'
+        run_params['debug'] = False
+
+    app.run(**run_params)
