@@ -1,6 +1,6 @@
 <template>
   <li class="nav-item" data-bs-toggle="modal" data-bs-target="#uploadPcapModal">
-    <a class="nav-link active" href="#">Upload PCAP</a>
+    <a class="nav-link active" href="#">Upload Captured</a>
   </li>
 
   <!-- Upload PCAP Modal -->
@@ -8,7 +8,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Upload PCAP</h5>
+          <h5 class="modal-title">Upload Network Capture File</h5>
           <button
             type="button"
             class="btn-close"
@@ -21,7 +21,8 @@
         <div class="modal-body">
           <div>
             <label for="formFile" class="form-label mt-1"
-              >Upload a pcap file to be analysed:</label
+              >Upload Network Capture File (.pcap, .pcapng, .snoop, or
+              .erf)</label
             >
             <input
               class="form-control"
