@@ -67,7 +67,7 @@ const stopCapture = async () => {
     hideModal("stopCaptureModal");
   } catch (error) {
     console.error("Error stopping sniffer:", error);
-    alert("Sniffer is not running");
+    alert(error.response.data.message);
   }
 };
 

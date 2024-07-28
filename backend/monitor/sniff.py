@@ -1,4 +1,4 @@
-from scapy.all import sniff, IP, TCP, Raw, AsyncSniffer, wrpcap
+from scapy.all import sniff, IP, TCP, Raw, AsyncSniffer, wrpcap, Ether
 import requests
 import json
 import re
@@ -15,11 +15,17 @@ from backend.detect.ids import *
 
 # 配置全局变量
 HOST_URL = 'http://localhost:8001/'
+PCAP_SAVE_DIR_NAME = 'pcap'
+# 如果文件夹不存在则创建
+PCAP_SAVE_DIR = os.path.join(os.path.dirname(__file__), PCAP_SAVE_DIR_NAME)
+os.makedirs(PCAP_SAVE_DIR, exist_ok=True)
 # 配置日志记录
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
-file_handler = logging.FileHandler('monitor/insert.log')
+current_dir = os.path.dirname(__file__)
+log_file_path = os.path.join(current_dir, 'insert.log')
+file_handler = logging.FileHandler(log_file_path)
 file_handler.setLevel(level=logging.INFO)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -128,7 +134,7 @@ def generate_sniffing(interface_list=[], port_list=[]) -> AsyncSniffer:
         interface = interface_list
 
     # print(f"Starting sniffing on interfaces: {interface}; fileter: {filter_str}")
-    return AsyncSniffer(iface=interface, filter=filter_str, prn=process_packet, store=0)
+    return AsyncSniffer(iface=interface, filter=filter_str, prn=process_packet, store=True)
     # sniff(iface=interface, filter=filter_str, prn=process_packet, stop_filter=stop_sniff, store=0) # old version
 
 def start_sniffing(sniffer: AsyncSniffer) -> bool:
@@ -141,7 +147,38 @@ def start_sniffing(sniffer: AsyncSniffer) -> bool:
 
 def stop_sniffing(sniffer: AsyncSniffer) -> bool:
     try:
+        # 停止嗅探
         sniffer.stop()
+        # 获取捕获到的所有数据包
+        packets = sniffer.results
+
+        # 检查捕获到的数据包数量
+        logger.info(f"Number of packets captured: {len(packets)}")
+
+        # 过滤掉 NoneType 数据包
+        filtered_packets = [pkt for pkt in packets if pkt is not None]
+
+        # 检查过滤后的数据包数量
+        logger.info(f"Number of valid packets: {len(filtered_packets)}")
+
+        # 检查是否有数据包
+        if filtered_packets:
+            # 获取第一个数据包的链路层类型
+            first_packet = filtered_packets[0]
+            if isinstance(first_packet, Ether):
+                linktype = 1  # Ethernet
+            else:
+                linktype = None  # 其他类型，可以根据需要设置
+
+            # 将捕获到的数据包写入 pcap 文件
+            pcap_file = f'{PCAP_SAVE_DIR}/{int(time.time())}.pcap'
+            logger.info(f"Captured packets saved to {pcap_file}")
+
+            # 指定链路层类型
+            wrpcap(pcap_file, filtered_packets, linktype=linktype)
+        else:
+            logger.error("No valid packets to write.")
+        
         return True
     except Exception as e:
         logger.error('Error: %s', e)
@@ -174,7 +211,7 @@ if __name__ == '__main__':
     packets = sniffer.results
 
     # 将捕获到的数据包写入 pcap 文件
-    pcap_file = 'captured_packets.pcap'
+    pcap_file = f'{int(time.time())}.pcap'
     wrpcap(pcap_file, packets)
 
     print(f"Captured packets saved to {pcap_file}")
