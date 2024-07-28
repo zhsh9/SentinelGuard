@@ -37,25 +37,31 @@ cd frontend; yarn serve
 
 <table style="width: 100%;">
   <tr>
-    <td style="width: 33.33%; text-align: center;">
+    <td style="width: 50%; text-align: center;">
       <img src="./static/login.jpeg" alt="Login Page" style="max-height: 200px; width: auto;" />
       <p>Login Page</p>
     </td>
-    <td style="width: 33.33%; text-align: center;">
+    <td style="width: 50%; text-align: center;">
       <img src="./static/upload.jpeg" alt="Upload Page" style="max-height: 200px; width: auto;" />
       <p>Upload Page</p>
     </td>
-    <td style="width: 33.33%; text-align: center;">
+  </tr>
+  <tr>
+    <td style="width: 50%; text-align: center;">
       <img src="./static/sniff.jpeg" alt="Sniff Page" style="max-height: 200px; width: auto;" />
       <p>Sniff Page</p>
     </td>
+    <td style="width: 50%; text-align: center;">
+      <img src="./static/stop_sniff.jpeg" alt="Stop Sniff Page" style="max-height: 200px; width: auto;" />
+      <p>Stop Sniff Page</p>
+    </td>
   </tr>
   <tr>
-    <td style="width: 33.33%; text-align: center;">
+    <td style="width: 50%; text-align: center;">
       <img src="./static/dashboard_light.png" alt="Dashboard Light Theme" style="max-height: 200px; width: auto;" />
       <p>Dashboard Light Theme</p>
     </td>
-    <td style="width: 33.33%; text-align: center;">
+    <td style="width: 50%; text-align: center;">
       <img src="./static/dashboard_dark.png" alt="Dashboard Dark Theme" style="max-height: 200px; width: auto;" />
       <p>Dashboard Dark Theme</p>
     </td>
