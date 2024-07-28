@@ -58,6 +58,38 @@ const handleFileChange = (event) => {
   selectedFile.value = event.target.files[0];
 };
 
+// 检查文件头
+const checkFileHeader = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = (event) => {
+      const arrayBuffer = event.target.result;
+      const header = new Uint8Array(arrayBuffer, 0, 4);
+      const headerHex = Array.from(header)
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+
+      // pcap: D4C3B2A1 or A1B2C3D4
+      // pcapng: 0A0D0D0A
+      // snoop: 736e6f6f70 (ASCII for 'snoop')
+      // erf: 454652 (ASCII for 'ERF')
+      if (
+        headerHex === "d4c3b2a1" ||
+        headerHex === "a1b2c3d4" ||
+        headerHex === "0a0d0d0a" ||
+        headerHex === "736e6f6f70" ||
+        headerHex.startsWith("454652")
+      ) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    };
+    reader.onerror = () => reject(new Error("Error reading file"));
+    reader.readAsArrayBuffer(file.slice(0, 4));
+  });
+};
+
 const uploadFile = async () => {
   // 检查是否选择了文件
   if (!selectedFile.value) {
@@ -65,25 +97,31 @@ const uploadFile = async () => {
     return;
   }
 
-  // 检查文件后缀名是否为 pcap pcapng
-  if (
-    !selectedFile.value.name.endsWith(".pcap") ||
-    !selectedFile.value.name.endsWith(".pcapng")
-  ) {
-    alert("Please select a .pcap file.");
+  // 检查文件后缀名是否为 pcap, pcapng, snoop, erf
+  const file = selectedFile.value;
+  const fileName = file.name.toLowerCase();
+  const validExtensions = [".pcap", ".pcapng", ".snoop", ".erf", ".hccapx"];
+
+  // 检查文件后缀名是否为支持的格式
+  if (!validExtensions.some((ext) => fileName.endsWith(ext))) {
+    alert("Please select a valid .pcap, .pcapng, .snoop, or .erf file.");
     return;
   }
 
-  // 检查文件类型 MIME 是否为 pcap pcapng
-  if (
-    selectedFile.value.type !== "application/vnd.tcpdump.pcap" &&
-    selectedFile.value.type !== "application/vnd.tcpdump.pcapng"
-  ) {
-    alert("Please select a .pcap file.");
+  // 检查文件头是否为 pcap, pcapng, snoop, erf
+  try {
+    const isValidHeader = await checkFileHeader(file);
+    if (!isValidHeader) {
+      alert("Please select a valid .pcap, .pcapng, .snoop, or .erf file.");
+      return;
+    }
+  } catch (error) {
+    console.error("Error checking file header:", error);
+    alert("An error occurred while checking the file.");
     return;
   }
 
-  // 检查文件大小是否超过 10 MB
+  // 检查文件大小是否超过 100 MB
   if (selectedFile.value.size > 100 * 1024 * 1024) {
     alert("File size must be less than 100 MB.");
     return;
