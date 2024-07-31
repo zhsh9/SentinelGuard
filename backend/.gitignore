@@ -6,3 +6,4 @@ log.*
 *.log.*
 *.pcap
 *.pcapng
+*.csv

@@ -23,10 +23,13 @@ API for database operations
 """
 import json
 from app import app, db
-from flask import jsonify, request
+from flask import jsonify, request, send_file
 from datetime import datetime, timezone
 from database.model import *
 import requests
+import csv
+import base64
+import dpkt
 # 数据库操作
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Table, MetaData, inspect, select, func, insert, text
@@ -502,7 +505,7 @@ def clean_table(frontend_table_name):
         inspector = inspect(db.engine)
         if not inspector.has_table(backend_table_name):
             return jsonify({'error': 'Table not found'}), 404
-        
+
         # 动态加载表实例
         metadata = MetaData()
         table = Table(backend_table_name, metadata, autoload_with=db.engine)
@@ -523,7 +526,84 @@ def clean_table(frontend_table_name):
         # 捕获所有其他异常并记录
         app.logger.error(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def export_to_csv(table, backend_table_name):
+    """Export table data to a CSV file excluding raw_packet."""
+    query = db.session.query(table).all()
+    csv_filename = f"{backend_table_name}.csv"
+    with open(csv_filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        # Write header
+        writer.writerow([
+            'id', 'category', 'source_ip', 'source_port',
+            'destination_ip', 'destination_port', 'time',
+            'request_method', 'request_uri', 'http_version',
+            'header_fields', 'request_body'
+        ])
+        # Write data rows
+        for row in query:
+            writer.writerow([
+                row.id, row.category, row.source_ip, row.source_port,
+                row.destination_ip, row.destination_port, row.time,
+                row.request_method, row.request_uri, row.http_version,
+                row.header_fields, row.request_body
+            ])
+    return csv_filename
+
+def export_to_pcap(table, backend_table_name):
+    """Export raw_packet data to a PCAP file."""
+    query = db.session.query(table.c.raw_packet).all()
+    pcap_filename = f"{backend_table_name}.pcap"
+    with open(pcap_filename, 'wb') as pcapfile:
+        writer = dpkt.pcap.Writer(pcapfile)
+        for row in query:
+            raw_packet = base64.b64decode(row.raw_packet)
+            writer.writepkt(raw_packet)
+    return pcap_filename
+
+@app.route('/api/db/<frontend_table_name>/export/<format>', methods=['GET'])
+def export_table(frontend_table_name, format):
+    mesg, is_done, status_code, _, backend_table_name = set_using(frontend_table_name)
+
+    if not is_done:
+        return jsonify(mesg), status_code
+
+    # 检查输入是否符合格式
+    if not backend_table_name or frontend_table_name not in tables.keys() or not tables[frontend_table_name]['using']:
+        return jsonify({'error': 'Invalid or inactive table name', 'tables': str(tables)}), 400
     
+    # 检查导出格式是否符合要求
+    if format not in ['csv', 'pcap']:
+        return jsonify({'error': 'Invalid export format'}), 400
+
+    try:
+        # 检查表是否存在
+        inspector = inspect(db.engine)
+        if not inspector.has_table(backend_table_name):
+            return jsonify({'error': 'Table not found'}), 404
+    
+        # 动态加载表实例
+        metadata = MetaData()
+        table = Table(backend_table_name, metadata, autoload_with=db.engine)
+        
+        if format == 'csv':
+            filename = export_to_csv(table, backend_table_name)
+        
+        elif format == 'pcap':
+            filename = export_to_pcap(table, backend_table_name)
+        
+        return send_file(filename, as_attachment=True)
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        # 记录并返回详细错误信息
+        error_details = str(e.__dict__.get('orig', e))
+        app.logger.error(f"SQLAlchemyError: {error_details}")
+        return jsonify({'error': error_details}), 500
+    except Exception as e:
+        # 捕获所有其他异常并记录
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 """
 API:
