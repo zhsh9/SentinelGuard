@@ -33,6 +33,16 @@ cd frontend; npm run serve
 cd frontend; yarn serve
 ```
 
+## To-Do
+
+- [x] Export function (csv, pcap)
+- [ ] Install script and serve script
+- [ ] backend: drop table by name, drop all tables
+- [ ] backend: update http record category using id
+- [ ] backend & frontend: update frontend_tb_name
+- [ ] frontend: design webpage for managing whitelist & blacklist
+- [ ] frontend: design webpage for managing detection rules
+
 ## Screenshot
 
 <table style="width: 100%;">

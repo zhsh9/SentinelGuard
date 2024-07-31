@@ -1,8 +1,0 @@
-- [x] frontend, sidebar
-- [x] frontend, main table
-- [x] backend, model design
-- [x] backend, db management
-- [x] backend, api for requesting data & related msg|info
-- [x] backend, ids system|mechanism design
-- [x] backend, ids detection mechanism
-- [ ] backend, dbname : real_dbname(prefix+timestamp)
