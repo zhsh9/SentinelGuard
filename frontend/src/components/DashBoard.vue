@@ -129,6 +129,7 @@
                 data-bs-toggle="dropdown"
                 aria-haspopup="true"
                 aria-expanded="true"
+                @click="exportChecker"
               >
                 <svg class="bi">
                   <use xlink:href="#export"></use>
@@ -137,18 +138,22 @@
               </button>
               <!-- Export drop-down -->
               <div
-                class="dropdown-menu hidden"
+                class="dropdown-menu"
                 aria-labelledby="btnGroupDrop_Export"
-                style="
-                  position: absolute;
-                  inset: 0px auto auto 0px;
-                  margin: 0px;
-                  transform: translate3d(0px, 40px, 0px);
-                "
                 data-popper-placement="bottom-start"
               >
-                <a class="dropdown-item" href="#">CSV</a>
-                <a class="dropdown-item" href="#">PCAP</a>
+                <a
+                  class="dropdown-item"
+                  href="/export/csv"
+                  @click.prevent="exportData('csv')"
+                  >CSV</a
+                >
+                <a
+                  class="dropdown-item"
+                  href="/export/pcap"
+                  @click.prevent="exportData('pcap')"
+                  >PCAP</a
+                >
               </div>
             </div>
             <button
@@ -369,6 +374,7 @@ const intervalId = ref(null); // 定时器 ID
 
 const curDbPath = computed(() => store.getters.curDbPath);
 const isSniffing = computed(() => store.getters.isSniffing);
+const showExportDropdown = ref(false);
 
 const filteredTableData = computed(() => {
   if (selectedCategories.value.length === 0) {
@@ -510,6 +516,56 @@ onMounted(() => {
     startFetchingData();
   }
 });
+
+// 检查准备export的时候 有没有正在使用的表，没有就alert，有就不做任何操作
+const exportChecker = async () => {
+  if (
+    curDbPath.value === undefined ||
+    curDbPath.value === null ||
+    curDbPath.value.length === 0
+  ) {
+    alert("Please select a database table first!");
+    showExportDropdown.value = false;
+    console.log("curDbPath is empty:", curDbPath.value);
+    return;
+  }
+  if (isSniffing.value) {
+    alert("Please stop sniffing first!");
+    showExportDropdown.value = false;
+    console.log("isSniffing is true:", isSniffing.value);
+    return;
+  }
+
+  showExportDropdown.value = true; // 符合条件时显示下拉菜单
+  console.log("showExportDropdown set to true");
+};
+
+// 下载指定格式的文件
+const exportData = async (format) => {
+  if (!showExportDropdown.value) {
+    alert("Please select a database table or stop sniffing first!");
+    return;
+  }
+  try {
+    const response = await axios.get(
+      `/api/db/${curDbPath.value}/export/${format}`,
+      {
+        responseType: "blob", // Important for downloading files
+      }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${curDbPath.value}.${format}`); // 文件名 前端表名.format
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error("Error during file export:", error);
+    alert("An error occurred while exporting the file.");
+  }
+};
 
 // 移除事件监听器
 onBeforeUnmount(() => {
@@ -704,10 +760,6 @@ tbody tr {
 #info > figure > figcaption {
   margin-bottom: 0;
 }
-ww .dropdown-menu {
-  width: 100px !important;
-  min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
-}
 
 td span {
   font-weight: bolder;
@@ -716,6 +768,10 @@ td span {
 .dropdown-menu {
   width: 100px !important;
   min-width: auto; /* 取消 Bootstrap 默认最小宽度 */
+  position: absolute;
+  inset: 0px auto auto 0px;
+  margin: 0px;
+  transform: translate3d(0px, 40px, 0px);
 }
 
 .offcanvas-custom {
