@@ -58,6 +58,7 @@ table_name_mapper: 维护表名到表的映射关系
 tables = app.config['TABLES']
 table_mapper = app.config['TABLE_MAPPER']
 initialized = False  # 初始化标志
+HOST_URL = 'http://localhost:8001/'
 
 # 把 tables 转换为格式化的字符串
 def format_log_dict(log_dict):
@@ -78,7 +79,7 @@ def format_log_dict(log_dict):
 # 可以接受的输入为：20210901120000, dynamic_http_request_log_20210901120000
 def set_using(frontend_table_name: str):    
     # 调用 use API 设置当前的 frontend_tablename 为 using=True 的状态
-    use_api_url = request.host_url + 'api/db/use'
+    use_api_url = HOST_URL + 'api/db/use'
     response = requests.post(use_api_url, json={'frontend_table_name': frontend_table_name})
     # time = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S') # 获取当前时间
     
