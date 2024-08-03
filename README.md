@@ -36,7 +36,9 @@ cd frontend; yarn serve
 ## To-Do
 
 - [x] Export function (csv, pcap)
-- [ ] Install script and serve script
+- [x] Environment checking script
+- [ ] release v0.0.2 publish
+- [ ] uploading pcap: support zip & tar with multiple pcap files
 - [ ] backend: drop table by name, drop all tables
 - [ ] backend: update http record category using id
 - [ ] backend & frontend: update frontend_tb_name
